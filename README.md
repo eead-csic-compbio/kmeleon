@@ -7,7 +7,7 @@ There are several steps to run a complete kmeleon analysis:
 * [Count the number of kmers at each genomic position: kmeleon_count.py](https://github.com/eead-csic-compbio/kmeleon#2nd-count-the-number-of-kmers-at-each-genomic-position)
 
 There are also other tools to manage the results:
-* [Join the kmer counts of all samples in a single table: kmeleon_table.py]()
+* [Join the kmer counts of all samples in a single table: kmeleon_table.py](https://github.com/eead-csic-compbio/kmeleon#3rd-join-the-kmer-counts-of-all-samples-in-a-single-table)
 
 ## 1st) Extract the kmers from the mappings
 
