@@ -6,6 +6,9 @@ There are several steps to run a complete kmeleon analysis:
 * [Extract the kmers from the mappings: kmeleon_extract.py](https://github.com/eead-csic-compbio/kmeleon#1st-extract-the-kmers-from-the-mappings)
 * [Count the number of kmers at each genomic position: kmeleon_count.py](https://github.com/eead-csic-compbio/kmeleon#2nd-count-the-number-of-kmers-at-each-genomic-position)
 
+There are also other tools to manage the results:
+* [Join the kmer counts of all samples in a single table: kmeleon_table.py]()
+
 ## 1st) Extract the kmers from the mappings
 
 This is done by running the script kmeleon_extract.py and the next parameters:
@@ -83,3 +86,34 @@ it generates a file with 2 columns (without header):
 * 1st field: the position within the target (chromosome)
 * 2nd field: the number of different kmers found in that position
 
+## 3rd) Join the kmer counts of all samples in a single table
+
+This is done by running the script kmeleon_table.py and the next parameters:
+
+`kmeleon_table.py samples_list_file target counts_DIR`
+
+- samples_list_file: a file with a list of samples to be included in the output table. The format of the file is just a sample name in each row.
+- target: chromosome or target name or number. For example, chr1.
+- counts_DIR: a path to the directory  where the files with counts (from kmeleon count) can be found. Note that the files in this folder must be in '.gz' format, \
+and will have the next filename format:
+
+`counts_DIR/sample_name.target.counts.out.gz`
+
+For example:
+
+`kmeleon_table.py my_samples chr1 counts`
+
+it generates a file with a header and n+1 columns, where n = number of samples.:
+
+```
+Pos	sample1	sample2	...	sampleN
+11865   1	1	...	1
+11866   1	2	...	1
+11867   1	2	...	1
+11868   3	2	...	1
+11869   3	1	...	0
+11870   3	1	...	0
+```
+
+* Pos: the position within the target (chromosome)
+* sample1...sampleN: the number of different kmers found in that position for a given sample
