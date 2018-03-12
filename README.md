@@ -54,3 +54,4 @@ to obtain only the first 2 columns (and a lighter file):
 * @ is a symbol used to differentiate the header from the other rows
 * Position: the position within the target (chromosome)
 * MD_Z: a kmer found in such position, in SAM/BAM file MD_Z field format
+* count: the times that this kmer has been observed at this position.
