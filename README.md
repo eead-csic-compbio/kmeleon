@@ -2,6 +2,13 @@
 
 A pipeline for k-mer count analysis of genomic diversity.
 
+#### Dependencies
+
+One of the kmeleon scripts, kmeleon_extract.py uses the Python API \
+[pysam](http://pysam.readthedocs.io/en/latest/api.html) to read the SAM/BAM mappings file.
+
+#### Running kmeleon
+
 There are several steps to run a complete kmeleon analysis:
 * [Extract the kmers from the mappings: kmeleon_extract.py](https://github.com/eead-csic-compbio/kmeleon#1st-extract-the-kmers-from-the-mappings)
 * [Count the number of kmers at each genomic position: kmeleon_count.py](https://github.com/eead-csic-compbio/kmeleon#2nd-count-the-number-of-kmers-at-each-genomic-position)
