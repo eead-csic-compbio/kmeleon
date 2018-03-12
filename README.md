@@ -14,6 +14,7 @@ There are several steps to run a complete kmeleon analysis:
 
 There are also other tools to manage the results:
 * [Join the kmer counts of all samples in a single table: kmeleon_table.py](https://github.com/eead-csic-compbio/kmeleon#3rd-join-the-kmer-counts-of-all-samples-in-a-single-table)
+* [Translate the position-based kmer counts to intervals of constant kmer count]()
 
 ## 1st) Extract the kmers from the mappings
 
@@ -123,3 +124,46 @@ Pos	sample1	sample2	...	sampleN
 
 * Pos: the position within the target (chromosome)
 * sample1...sampleN: the number of different kmers found in that position for a given sample
+
+## 4th) Translate the position-based kmer counts to intervals of constant kmer count
+
+This is done by running the script kmeleon_intervals.sh and the next parameters:
+
+`kmeleon_intervals.sh sample target counts_DIR minspan kmercount binary`
+
+- sample: the sample to process.
+- target: for example the chromosome name or number.
+- counts_DIR: a path to the directory  where the files with counts (from kmeleon count) can be found. Note that the files in this folder must be in '.gz' format, \
+and will have the next filename format:
+`counts_DIR/sample_name.target.counts.out.gz`
+- minspan: minimum length (consecutive genome nucleotides) of the resulting interval to be reported as such. E.g. 50
+- kmercount: whether report all intervals (all), only those with kmercount=1 (uniq), or those with kmercount>1 (multiple)
+- binary: whether the raw count value is used to compute intervals (no), or just differentiating kmercount=1 of kmercount>1 (yes)
+
+For example:
+
+`kmeleon_intervals.sh sample_name chr1H_part1 counts 50 multiple yes`
+
+will report all the intervals (kmercount=all), joining all positions with kmercount>1 in intervals (binary=yes), and at least a length of 50 nts (minspan=50)
+
+it generates a file without header and with 4 columns:
+
+```
+chr1H_part1	41868	41871	0
+chr1H_part1	41911	41925	0
+chr1H_part1	41977	41982	0
+chr1H_part1	41985	42023	0
+chr1H_part1	42054	42056	0
+chr1H_part1	42169	42231	0
+chr1H_part1	42274	42348	0
+chr1H_part1	42349	42375	1
+chr1H_part1	42376	42390	0
+chr1H_part1	42391	42420	1
+```
+
+* 1st column is the target name@ is a symbol used to differentiate the header from the other rows
+* 2nd column is the starting position of the interval
+* 3rd column is the ending position of the interval
+* 4th column shows whether kmercount=1 (0) or kmercount>1 (1)
+
+NOTE that the values of the 4th column would show the actual kmercount with the option binary=no
