@@ -15,6 +15,7 @@ There are several steps to run a complete kmeleon analysis:
 There are also other tools to manage the results:
 * [Join the kmer counts of all samples in a single table: kmeleon_table.py](https://github.com/eead-csic-compbio/kmeleon#3rd-join-the-kmer-counts-of-all-samples-in-a-single-table)
 * [Translate the position-based kmer counts to intervals of constant kmer count](https://github.com/eead-csic-compbio/kmeleon#4th-translate-the-position-based-kmer-counts-to-intervals-of-constant-kmer-count)
+* [Obtain a matrix of pairwise distances or similarities based on intersection of intervals between samples]()
 
 ## 1st) Extract the kmers from the mappings
 
@@ -167,3 +168,26 @@ chr1H_part1	42391	42420	1
 * 4th column shows whether kmercount=1 (0) or kmercount>1 (1)
 
 NOTE that the values of the 4th column would show the actual kmercount with the option binary=no
+
+## 5th) Obtain a matrix of pairwise distances or similarities based on intersection of intervals between samples
+
+This is done by running the script kmeleon_intersection_matrix.sh and the next parameters:
+
+`kmeleon_intersection_matrix.sh samplesfiles_list_file distances`
+
+- samplesfiles_list_file: a file with a list of duples of sample (1st column) and the file with kmercount intervals of such sample (2nd column).
+- distances: whether to report similarities (no) or distances (yes).
+
+For example:
+
+`kmeleon_intersection_matrix.sh my_samples_files yes`
+
+it generates a file with a header and an n*n matrix, where n = number of samples.:
+
+```
+sample1 sample2 ...     sampleN
+0   0.6       ...     0.4
+0.5   0	...     0.5
+0.3	0.4	...     0
+```
+NOTE that the values of the matrix will be distances, if distances=yes, as shown above, or similarities, if distances=no.
