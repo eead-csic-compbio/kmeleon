@@ -43,7 +43,7 @@ if (pos!=prevpos+1 || count!=prevcount) {
 			(kmercount=="multiple" && binary=="yes" && prevcount==1)
 			) {
 			if (span>=minspan){
-				print "'"$full"'""\t"inipos"\t"prevpos"\t"prevcount; 
+				print "'"$full"'""\t"inipos-1"\t"prevpos"\t"prevcount; 
 			}
 		}
 	}
@@ -61,7 +61,7 @@ if (inipos!=-1 && inipos<prevpos) {
 		(kmercount=="multiple" && binary=="yes" && prevcount==1)		
 		)	{
 		if (span>=minspan){
-			print "'"$full"'""\t"inipos"\t"prevpos"\t"prevcount;
+			print "'"$full"'""\t"inipos-1"\t"prevpos"\t"prevcount;
 		}
 	}
 }

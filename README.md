@@ -146,7 +146,7 @@ For example:
 
 will report all the intervals (kmercount=all), joining all positions with kmercount>1 in intervals (binary=yes), and at least a length of 50 nts (minspan=50)
 
-it generates a file without header and with 4 columns:
+it generates a file in BED-like format without header and with 4 columns:
 
 ```
 chr1H_part1	41868	41871	0
@@ -162,7 +162,7 @@ chr1H_part1	42391	42420	1
 ```
 
 * 1st column is the target name@ is a symbol used to differentiate the header from the other rows
-* 2nd column is the starting position of the interval
+* 2nd column is the starting position of the interval. Note that is 0-based, as it follows the BED format
 * 3rd column is the ending position of the interval
 * 4th column shows whether kmercount=1 (0) or kmercount>1 (1)
 
