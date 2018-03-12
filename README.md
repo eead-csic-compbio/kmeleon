@@ -162,7 +162,7 @@ chr1H_part1	42391	42420	1
 ```
 
 * 1st column is the target name@ is a symbol used to differentiate the header from the other rows
-* 2nd column is the starting position of the interval. Note that is 0-based, as it follows the BED format
+* 2nd column is the starting position of the interval. Note that this field is 0-based, as it follows the BED format
 * 3rd column is the ending position of the interval
 * 4th column shows whether kmercount=1 (0) or kmercount>1 (1)
 
