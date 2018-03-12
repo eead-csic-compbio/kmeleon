@@ -51,6 +51,6 @@ to obtain only the first 2 columns (and a lighter file):
 2922	51
 ```
 
-@ is a symbol used to differentiate the header from the other rows
-Position: the position within the target (chromosome)
-MD_Z: a kmer found in such position, in SAM/BAM file MD_Z field format
+* @ is a symbol used to differentiate the header from the other rows
+* Position: the position within the target (chromosome)
+* MD_Z: a kmer found in such position, in SAM/BAM file MD_Z field format
