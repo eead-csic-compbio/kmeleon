@@ -4,8 +4,7 @@ A pipeline for k-mer count analysis of genomic diversity.
 
 #### Dependencies
 
-One of the kmeleon scripts, kmeleon_extract.py uses the Python API \
-[pysam](http://pysam.readthedocs.io/en/latest/api.html) to read the SAM/BAM mappings file.
+One of the kmeleon scripts, kmeleon_extract.py uses the Python API [pysam](http://pysam.readthedocs.io/en/latest/api.html) to read the SAM/BAM mappings file.
 
 #### Running kmeleon
 
