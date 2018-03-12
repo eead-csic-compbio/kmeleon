@@ -4,7 +4,7 @@ A pipeline for k-mer count analysis of genomic diversity.
 
 There are several steps to run a complete kmeleon analysis:
 * [Extract the kmers from the mappings: kmeleon_extract.py](https://github.com/eead-csic-compbio/kmeleon#1st-extract-the-kmers-from-the-mappings)
-* [Count the number of kmers at each genomic position: kmeleon_count.py]()
+* [Count the number of kmers at each genomic position: kmeleon_count.py](https://github.com/eead-csic-compbio/kmeleon#2nd-count-the-number-of-kmers-at-each-genomic-position)
 
 ## 1st) Extract the kmers from the mappings
 
