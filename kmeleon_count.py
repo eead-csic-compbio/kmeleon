@@ -17,9 +17,10 @@ else:
     sys.stderr.write("\tkmeleon_count.py kmers_file 4\n")
     sys.stderr.write("\n")
     sys.stderr.write("We need 2 parameters:\n")
-    sys.stderr.write("\t- kmers_file: a file with kmers by position (the one reported by kmeleon extract, for example). \
+    sys.stderr.write("\t- kmers_file: a file with kmers by position \
+(the one reported by kmeleon extract with the 'depths' option, for example). \
 It could be in '.gz' extension or not.\n")
-    sys.stderr.write("\t- min_depth: a number which is the minimum depth of kmer to be considered and counted. For instance 4.\n")
+    sys.stderr.write("\t- min_depth: a number which is the minimum depth of a kmer to be considered and counted. For instance 4.\n")
     sys.stderr.write("\n")
     sys.exit(-1)
 
