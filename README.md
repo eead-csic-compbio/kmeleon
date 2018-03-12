@@ -6,7 +6,8 @@ A pipeline for k-mer count analysis of genomic diversity
 
 This is done by running the script kmeleon_extract.py and the next parameters:
 
-kmeleon_extract.py target mappings kmer_size flush depths
+
+`kmeleon_extract.py target mappings kmer_size flush depths`
 
 - target: for example the chromosome name or number.
 - mappings: the file with mappings to process. A SAM or BAM file would be great.
@@ -16,7 +17,7 @@ kmeleon_extract.py target mappings kmer_size flush depths
 
 For example:
 
-kmeleon_extract.py chr1 mappings.sam 50 10000 depths
+`kmeleon_extract.py chr1 mappings.sam 50 10000 depths`
 
 it generates a file with 3 columns, as shown in its header:
 
@@ -32,7 +33,7 @@ it generates a file with 3 columns, as shown in its header:
 
 or
 
-kmeleon_extract.py chr1 mappings.sam 50 10000
+`kmeleon_extract.py chr1 mappings.sam 50 10000`
 
 to obtain only the first 2 columns (and a lighter file):
 
