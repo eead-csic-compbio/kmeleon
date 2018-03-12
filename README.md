@@ -3,7 +3,7 @@
 A pipeline for k-mer count analysis of genomic diversity.
 
 There are several steps to run a complete kmeleon analysis:
-* [Extract the kmers from the mappings: kmeleon_extract.py](https://github.com/eead-csic-compbio/kmeleon#1st-obtain-the-kmers-for-each-genome-position)
+* [Extract the kmers from the mappings: kmeleon_extract.py](https://github.com/eead-csic-compbio/kmeleon#1st-extract-the-kmers-from-the-mappings)
 * Count the number of kmers at each genomic position: kmeleon_count.py
 
 ## 1st) Extract the kmers from the mappings
@@ -51,6 +51,6 @@ to obtain only the first 2 columns (and a lighter file):
 2922	51
 ```
 
-# @ is a symbol used to differentiate the header from the other rows
-# Position: the position within the target (chromosome)
-# MD_Z: a kmer found in such position, in SAM/BAM file MD_Z field format
+@ is a symbol used to differentiate the header from the other rows
+Position: the position within the target (chromosome)
+MD_Z: a kmer found in such position, in SAM/BAM file MD_Z field format
