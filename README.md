@@ -14,7 +14,7 @@ There are several steps to run a complete kmeleon analysis:
 
 There are also other tools to manage the results:
 * [Join the kmer counts of all samples in a single table: kmeleon_table.py](https://github.com/eead-csic-compbio/kmeleon#3rd-join-the-kmer-counts-of-all-samples-in-a-single-table)
-* [Translate the position-based kmer counts to intervals of constant kmer count]()
+* [Translate the position-based kmer counts to intervals of constant kmer count](https://github.com/eead-csic-compbio/kmeleon#4th-translate-the-position-based-kmer-counts-to-intervals-of-constant-kmer-count)
 
 ## 1st) Extract the kmers from the mappings
 
