@@ -15,12 +15,46 @@
 
 import sys
 import pysam
-
-sys.stderr.write("Running kmeleon extract...\n")
+from optparse import OptionParser
 
 ############## FUNCTION DEFINITIONS
 ##############
 
+# Open the file to be read (either as SAM or BAM)
+def get_input_file(input_file_param, file_type):
+    ret_file = None
+    if file_type == FILE_TYPE_SAM:
+        ret_file = pysam.AlignmentFile(input_file_param, "r")
+    elif file_type == FILE_TYPE_BAM:
+        ret_file = pysam.AlignmentFile(input_file_param, "rb")
+    else:
+        raise Exception("Unrecognized file type "+str(file_type)+".")
+    
+    return ret_file
+
+# Count reads in a mappings file
+def get_samfile_count(input_file, target, start, end):
+    if target == DEFAULT_TARGET_PARAM:
+        ret_count = input_file.count()
+    elif start == DEFAULT_START_PARAM or end == DEFAULT_END_PARAM:
+        ret_count = input_file.count(target)
+    else:
+        ret_count = input_file.count(target, start, end)
+    
+    return ret_count
+
+# Obtain the iterator depending on target or not
+def get_samfile_iter(input_file, target, start, end):
+    if target == DEFAULT_TARGET_PARAM:
+        ret_iter = input_file.fetch() #(until_eof=True)
+    elif start == DEFAULT_START_PARAM or end == DEFAULT_END_PARAM:
+        ret_iter = input_file.fetch(target)
+    else:
+        ret_iter = input_file.fetch(target, start, end)#samfile.fetch('chr1', 100, 120):
+    
+    return ret_iter
+
+# Ask whether a value is a number or not
 def is_number(s):
     try:
         int(s)
@@ -200,7 +234,7 @@ def f_add_insertions(expanded_md_z, insertions):
     return res_md
 
 ##
-def f_print_previous_kmers(curr_pos, flush_interval):
+def f_print_previous_kmers(curr_pos, min_depth, flush_interval):
     new_list = []
     new_dict = {}
     
@@ -213,11 +247,12 @@ def f_print_previous_kmers(curr_pos, flush_interval):
             #sys.stderr.write("Position "+str(kmer_position)+"\n")
             if curr_pos - flush_interval > kmer_position:
                 for kmer in pos_kmers_dict:
-                    if store_depths:
-                        kmer_count = pos_kmers_dict[kmer]
+                    #if store_depths:
+                    kmer_count = pos_kmers_dict[kmer]
+                    if kmer_count >= min_depth:
                         sys.stdout.write(str(kmer_position)+"\t"+str(kmer)+"\t"+str(kmer_count)+"\n")
-                    else:
-                        sys.stdout.write(str(kmer_position)+"\t"+str(kmer)+"\n")
+                    #else:
+                    #    sys.stdout.write(str(kmer_position)+"\t"+str(kmer)+"\n")
             else:
                 new_list.append(kmer_position)
                 new_dict[kmer_position] = pos_kmers_dict
@@ -234,64 +269,148 @@ def f_print_previous_kmers(curr_pos, flush_interval):
     
     return (new_list, new_dict)
 
-
 ################ MAIN
 ################
+
+sys.stderr.write("Running kmeleon extract...\n")
+
+################ GLOBALS AND PARAMETERS
 
 VERBOSE_ALL = 5
 verbosity = 0
 
+FLUSH_INTERVAL = 10000
+
 CIGAR_INSERTION_FIELD = 1
 CIGAR_SOFTCLIP_FIELD = 4
 
-if ((len(sys.argv)!=5) and (len(sys.argv)!=6)):
-    sys.stderr.write("\n")
-    sys.stderr.write("Wrong parameter number for kmeleon extract.\n")
-    sys.stderr.write("A typical kmeleon extract command would be:\n")
-    sys.stderr.write("\tkmeleon_extract.py chr1 mappings.sam 50 10000\n")
-    sys.stderr.write("or, requesting depths:\n")
-    sys.stderr.write("\tkmeleon_extract.py chr1 mappings.sam 50 10000 depths\n")
-    sys.stderr.write("\n")
-    sys.stderr.write("We need 5 parameters and another optional one:\n")
-    sys.stderr.write("\t- Target: for example the chromosome number.\n")
-    sys.stderr.write("\t- Mappings file: the mappings to process. A SAM or BAM file would be great.\n")
-    sys.stderr.write("\t- kmer size: a number which indicates the size of sequences to search for. 50 for example.\n")
-    sys.stderr.write("\t- flush interval: a number which allows controlling how much memory is used by kmeleon. 10000 or 20000 is ok in general.\n")
-    sys.stderr.write("\t- Optional argument: if the word 'depths' is given, the depth of each kmer found will be also reported.\n")
-    sys.stderr.write("\n")
-    sys.exit(-1)
+FILE_TYPE_BAM = "BAM"
+FILE_TYPE_SAM = "SAM"
 
+DEFAULT_TARGET_PARAM = "all"
+DEFAULT_START_PARAM = -1
+DEFAULT_END_PARAM = -1
+DEFAULT_KMER_PARAM = 50
+DEFAULT_DEPTH_PARAM = 0
+
+## Usage
+__usage = "usage: kmeleon_extract.py [OPTIONS] -b BAM_FILE|-s SAM_FILE\n"+\
+          "Note that this software outputs to stderr and stdout.\n\n"+\
+          "typical command: kmeleon_extract.py -d 4 -b demo_data/demo.2_19.bam"
+optParser = OptionParser(__usage)
+
+########### Read parameters
+###########
+
+optParser.add_option('-t', '--target', action='store', dest='target_param', type='string', \
+                    help='A chromosome number or name, or a specific contig, or "all" to process all the mappings.'+\
+                    '(default: "all".')
+
+optParser.add_option('--start', action='store', dest='start_param', type='int', \
+                    help='The -t target parameter is required. Starting basepairs position to process within the given target.'+\
+                    '(default: '+str(DEFAULT_START_PARAM)+')')
+
+optParser.add_option('--end', action='store', dest='end_param', type='int', \
+                    help='The -t target parameter is required. Ending basepairs position to process within the given target.'+\
+                    '(default: '+str(DEFAULT_END_PARAM)+')')
+
+optParser.add_option('-k', '--kmer', action='store', dest='kmer_param', type='int', \
+                    help='A number, which will translate to "k"=number+1, to parse fragments (k-mers) of length "k".'+\
+                    '(default: '+str(DEFAULT_KMER_PARAM)+')')
+
+optParser.add_option('-d', '--depth', action='store', dest='depth_param', type='int', \
+                    help='The minimum times a k-mer is found to be reported in the output.'+\
+                    '(default: '+str(DEFAULT_DEPTH_PARAM)+')')
+
+optParser.add_option('-b', '--bam', action='store', dest='bam_param', type='string', \
+                    help='A BAM file to process.'+\
+                    'Either the -b or the -s option is required.')
+
+optParser.add_option('-s', '--sam', action='store', dest='sam_param', type='string', \
+                    help='A SAM file to process.'+\
+                    'Either the -s or the -b option is required.')
+
+(options, arguments) = optParser.parse_args()
+
+## Target
+if options.target_param:
+    target_param = options.target_param
 else:
-    target_seq = sys.argv[1]
-    sam_file = sys.argv[2]
-    window_size = int(sys.argv[3])
-    FLUSH_INTERVAL = int(sys.argv[4]) #20000
-    store_depths = False
-    if len(sys.argv)==6:
-        if sys.argv[5] == "depths":
-            store_depths = True
+    target_param = DEFAULT_TARGET_PARAM
 
-sys.stderr.write("Reading file "+sam_file+" to process target "+target_seq+"\n")
+## Start
+if options.start_param:
+    if target_param == DEFAULT_TARGET_PARAM:
+        optParser.exit(0, "The --start and --end options require a specific --target (-t) option.\n")
+    else:
+        start_param = options.start_param
+else:
+    start_param = DEFAULT_START_PARAM
 
-#window_size = 50
-window_side = window_size / 2
+## End
+if options.end_param:
+    if target_param == DEFAULT_TARGET_PARAM:
+        optParser.exit(0, "The --start and --end options require a specific --target (-t) option.\n")
+    else:
+        end_param = options.end_param
+else:
+    end_param = DEFAULT_END_PARAM
+
+## kmer
+if options.kmer_param:
+    kmer_param = options.kmer_param
+else:
+    kmer_param = DEFAULT_KMER_PARAM
+
+## depth
+if options.depth_param:
+    depth_param = options.depth_param
+else:
+    depth_param = DEFAULT_DEPTH_PARAM
+    
+## BAM file
+file_type = ""
+if options.bam_param:
+    input_file_param = options.bam_param
+    file_type = FILE_TYPE_BAM
+elif options.sam_param:
+        input_file_param = options.sam_param
+        file_type = FILE_TYPE_SAM
+else:
+    optParser.exit(0, "A BAM file or SAM file must be specified (with the -b or -s options, respectively).\n")
+
+#########################
+######################### BEGIN
+
+#store_depths = True
+
+sys.stderr.write("Reading file "+input_file_param+" to process target "+target_param+"\n")
+
+#kmer_param = 50
+window_side = kmer_param / 2
 
 pos_dict = {}
 pos_list = []
 
 ## TODO: Add exception handling to this
-samfile = pysam.AlignmentFile(sam_file, "rb")
+input_file = get_input_file(input_file_param, file_type)
 
-numreads = samfile.count(target_seq)
+numreads = get_samfile_count(input_file, target_param, start_param, end_param)
+
+sys.stderr.write("Num of reads to process "+str(numreads)+"\n")
 
 numreads_processed = 0
 header_printed = False
 first_to_flush_pos = -1
 
 #for line in open(samfile, 'r'):
-for read in samfile.fetch(target_seq):#samfile.fetch('chr1', 100, 120):
+samfile_iter = get_samfile_iter(input_file, target_param, start_param, end_param)
+
+for read in samfile_iter:
     
     #print read
+    
+    if read.is_unmapped: continue
     
     read_id = read.query_name
     
@@ -356,22 +475,22 @@ for read in samfile.fetch(target_seq):#samfile.fetch('chr1', 100, 120):
             #kmer_contig_position = f_get_kmer_contig_position(i, read_map_pos, read_clipping)
             kmer_contig_position = f_get_kmer_contig_position(i, ref_pos_start, read_left_clip)
             
-            if store_depths:
-                f_add_kmer_depths(kmer_contig_position, collapsed_md_z)
-            else:
-                f_add_kmer(kmer_contig_position, collapsed_md_z)
+            #if store_depths:
+            f_add_kmer_depths(kmer_contig_position, collapsed_md_z)
+            #else:
+            #    f_add_kmer(kmer_contig_position, collapsed_md_z)
         
         ################ Generate output
         # Header
         if not header_printed:
-            if store_depths:
-                sys.stdout.write("@ Position\tMD_Z\tcount\n")
-            else:
-                sys.stdout.write("@ Position\tMD_Z\n")
+            #if store_depths:
+            sys.stdout.write("@Position\tkmer(MD_Z)\tdepth\n")
+            #else:
+            #    sys.stdout.write("@ Position\tMD_Z\n")
             header_printed = True
         
         if ref_pos_start - FLUSH_INTERVAL*2 > first_to_flush_pos:
-            (pos_list, pos_dict) = f_print_previous_kmers(ref_pos_start, FLUSH_INTERVAL)
+            (pos_list, pos_dict) = f_print_previous_kmers(ref_pos_start, depth_param, FLUSH_INTERVAL)
             #print "POS RANGE"
             #print read
             #print pos_range
@@ -384,7 +503,7 @@ for read in samfile.fetch(target_seq):#samfile.fetch('chr1', 100, 120):
     if (numreads_processed % 1000 == 0):
         sys.stderr.write(str(numreads_processed)+" reads processed (out of "+str(numreads)+").\n")
 
-samfile.close()
+input_file.close()
 
 ################ Generate output for the remaining data
 # Rows
@@ -393,11 +512,12 @@ for kmer_position in pos_list:
         #sys.stderr.write("Position "+str(kmer_position)+"\n")
         pos_kmers_dict = pos_dict[kmer_position]
         for kmer in pos_kmers_dict:
-            if store_depths:
-                kmer_count = pos_kmers_dict[kmer]
+            #if store_depths:
+            kmer_count = pos_kmers_dict[kmer]
+            if kmer_count >= depth_param:
                 sys.stdout.write(str(kmer_position)+"\t"+str(kmer)+"\t"+str(kmer_count)+"\n")
-            else:
-                sys.stdout.write(str(kmer_position)+"\t"+str(kmer)+"\n")
+            #else:
+            #    sys.stdout.write(str(kmer_position)+"\t"+str(kmer)+"\n")
         
     else:
         raise Exception("Position "+str(kmer_position)+" is not in dict")

@@ -20,24 +20,43 @@ There are also other tools to manage the results:
 
 ## 1st) Extract the kmers from the mappings
 
-This is done by running the script kmeleon_extract.py and the next parameters:
+This is done by running the script kmeleon_extract.py, which has the next parameters:
 
-`kmeleon_extract.py target mappings kmer_size flush depths`
+```
+Usage: kmeleon_extract.py [OPTIONS] -b BAM_FILE|-s SAM_FILE
+Note that this software outputs to stderr and stdout.
 
-- target: for example the chromosome name or number.
-- mappings: the file with mappings to process. A BAM file would be great (SAM is not valid).
-- kmer_size: a number which indicates the size of sequences to search for. 50 for example.
-- flush: a number which allows controlling how much memory is used by kmeleon while reading the SAM/BAM file. 10000 or 20000 is ok in general.
-- depths: (Optional argument) if the word 'depths' is given, the depth of each kmer found will be also reported.
+typical command: kmeleon_extract.py -d 4 -b demo_data/demo.2_19.bam
 
-For example:
-
-`kmeleon_extract.py chr1 mappings.sam 50 10000 depths`
+Options:
+  -h, --help            show this help message and exit
+  -t TARGET_PARAM, --target=TARGET_PARAM
+                        A chromosome number or name, or a specific contig, or
+                        "all" to process all the mappings.(default: "all".
+  --start=START_PARAM   The -t target parameter is required. Starting
+                        basepairs position to process within the given
+                        target.(default: -1)
+  --end=END_PARAM       The -t target parameter is required. Ending basepairs
+                        position to process within the given target.(default:
+                        -1)
+  -k KMER_PARAM, --kmer=KMER_PARAM
+                        A number, which will translate to "k"=number+1, to
+                        parse fragments (k-mers) of length "k".(default: 50)
+  -d DEPTH_PARAM, --depth=DEPTH_PARAM
+                        The minimum times a k-mer is found to be reported in
+                        the output.(default: 0)
+  -b BAM_PARAM, --bam=BAM_PARAM
+                        A BAM file to process.Either the -b or the -s option
+                        is required.
+  -s SAM_PARAM, --sam=SAM_PARAM
+                        A SAM file to process.Either the -s or the -b option
+                        is required.
+```
 
 it generates a file with 3 columns, as shown in its header:
 
 ```
-@ Position	MD_Z	count
+@Position	kmer(MD_Z)	depth
 2917	51	1
 2918	51	1
 2919	51	1
@@ -46,26 +65,10 @@ it generates a file with 3 columns, as shown in its header:
 2922	51	1
 ```
 
-or
-
-`kmeleon_extract.py chr1 mappings.sam 50 10000`
-
-to obtain only the first 2 columns (and a lighter file):
-
-```
-@ Position	MD_Z
-2917	51
-2918	51
-2919	51
-2920	51
-2921	51
-2922	51
-```
-
 * @ is a symbol used to differentiate the header from the other rows
 * Position: the position within the target (chromosome)
-* MD_Z: a kmer found in such position, in SAM/BAM file MD_Z field format
-* count: the times that this kmer has been observed at this position.
+* kmer(MD_Z): a kmer found in such position, in SAM/BAM file MD_Z field format
+* depth: the times that this kmer has been observed at this position.
 
 ## 2nd) Count the number of kmers at each genomic position
 
