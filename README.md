@@ -25,7 +25,7 @@ This is done by running the script kmeleon_extract.py and the next parameters:
 `kmeleon_extract.py target mappings kmer_size flush depths`
 
 - target: for example the chromosome name or number.
-- mappings: the file with mappings to process. A SAM or BAM file would be great.
+- mappings: the file with mappings to process. A BAM file would be great (SAM is not valid).
 - kmer_size: a number which indicates the size of sequences to search for. 50 for example.
 - flush: a number which allows controlling how much memory is used by kmeleon while reading the SAM/BAM file. 10000 or 20000 is ok in general.
 - depths: (Optional argument) if the word 'depths' is given, the depth of each kmer found will be also reported.
