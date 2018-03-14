@@ -20,7 +20,7 @@ There are also other tools to manage the results:
 
 ## 1st) Extract the kmers from the mappings
 
-This is done by running the script *kmeleon_extract.py*, which has the next parameters:
+This is done by running the script **kmeleon_extract.py**, which has the next parameters:
 
 ```
 Usage: kmeleon_extract.py [OPTIONS] -b BAM_FILE|-s SAM_FILE
