@@ -87,19 +87,20 @@ Options:
                         the output.(default: 0)
 ```
 
-it generates a file with 2 columns (without header):
+it generates a file with 3 columns (without header):
 
 ```
-11865	1
-11866	1
-11867	1
-11868	1
-11869	1
-11870	1
+chr1    11865	1
+chr1    11866	1
+chr1    11867	1
+chr1    11868	1
+chr1    11869	1
+chr1    11870	1
 ```
 
-* 1st field: the position within the target (chromosome)
-* 2nd field: the number of different kmers found in that position
+* 1st field: the chromosome or contig.
+* 2nd field: the position within the target (chromosome)
+* 3rd field: the number of different kmers found in that position
 
 ## 3rd) Join the kmer counts of all samples in a single table
 
