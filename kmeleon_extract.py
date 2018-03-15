@@ -296,7 +296,7 @@ DEFAULT_DEPTH_PARAM = 0
 ## Usage
 __usage = "usage: kmeleon_extract.py [OPTIONS] -b BAM_FILE|-s SAM_FILE\n"+\
           "Note that this software outputs to stderr and stdout.\n\n"+\
-          "typical command: kmeleon_extract.py -d 4 -b demo_data/demo.2_19.bam"
+          "typical command: kmeleon_extract.py -d 4 -b demo_data/demo.2_19.bam > demo_data/demo.2_19.kmers"
 optParser = OptionParser(__usage)
 
 ########### Read parameters

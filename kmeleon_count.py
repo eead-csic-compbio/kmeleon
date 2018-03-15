@@ -4,32 +4,51 @@
 # CPCantalapiedra 2017
 
 import sys, gzip
+from optparse import OptionParser
+
+################ MAIN
+################
 
 sys.stderr.write("Running kmeleon count...\n")
 
-if (len(sys.argv)==3):
-    kmers_file = sys.argv[1]
-    min_count = int(sys.argv[2])#4
-else:
-    sys.stderr.write("\n")
-    sys.stderr.write("Wrong parameter number for kmeleon count.\n")
-    sys.stderr.write("A typical kmeleon count command would be:\n")
-    sys.stderr.write("\tkmeleon_count.py kmers_file 4\n")
-    sys.stderr.write("\n")
-    sys.stderr.write("We need 2 parameters:\n")
-    sys.stderr.write("\t- kmers_file: a file with kmers by position \
-(the one reported by kmeleon extract with the 'depths' option, for example). \
-It could be in '.gz' extension or not.\n")
-    sys.stderr.write("\t- min_depth: a number which is the minimum depth of a kmer to be considered and counted. For instance 4.\n")
-    sys.stderr.write("\n")
-    sys.exit(-1)
+################ GLOBALS AND PARAMETERS
 
+DEFAULT_DEPTH_PARAM = 0
+
+## Usage
+__usage = "usage: kmeleon_count.py [OPTIONS] KMERS_FILE\n"+\
+          "Note that this software outputs to stderr and stdout.\n\n"+\
+          "typical command: kmeleon_count.py -d 4 demo_data/demo.2_19.kmers > demo_data/demo.2_19.counts"
+optParser = OptionParser(__usage)
+
+optParser.add_option('-d', '--depth', action='store', dest='depth_param', type='int', \
+                    help='The minimum times a k-mer is found to be reported in the output.'+\
+                    '(default: '+str(DEFAULT_DEPTH_PARAM)+')')
+
+(options, arguments) = optParser.parse_args()
+
+# THIS IS MANDATORY
+if not arguments or len(arguments)==0:
+    optParser.exit(0, "You may wish to run '-help' option.\n")
+# INPUT FILE
+kmers_file = arguments[0]
+
+## depth
+if options.depth_param:
+    depth_param = options.depth_param
+else:
+    depth_param = DEFAULT_DEPTH_PARAM
+
+#########################
+######################### BEGIN
 
 pos_dict = {}
 pos_list = []
 
-ext = kmers_file[-2:]
-if ext == "gz":
+ext_pos = kmers_file.rfind(".")
+ext = kmers_file[ext_pos+1:]
+
+if ext == "gz" or ext == "gzip":
     kmers_fileobj = gzip.open(kmers_file, 'r')
 else:
     kmers_fileobj = open(kmers_file, 'r')
@@ -44,7 +63,7 @@ for i, line in enumerate(kmers_fileobj):
     #sys.stderr.write(str(line_data)+"\n")
     
     md_z_count = int(line_data[2])
-    if md_z_count < min_count: continue
+    if md_z_count < depth_param: continue
     
     pos = int(line_data[0])
     md_z = line_data[1]

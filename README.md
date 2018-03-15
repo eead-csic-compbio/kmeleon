@@ -26,7 +26,7 @@ This is done by running the script **kmeleon_extract.py**, which has the next pa
 Usage: kmeleon_extract.py [OPTIONS] -b BAM_FILE|-s SAM_FILE
 Note that this software outputs to stderr and stdout.
 
-typical command: kmeleon_extract.py -d 4 -b demo_data/demo.2_19.bam
+typical command: kmeleon_extract.py -d 4 -b demo_data/demo.2_19.bam > demo_data/demo.2_19.kmers
 
 Options:
   -h, --help            show this help message and exit
@@ -72,17 +72,20 @@ it generates a file with 3 columns, as shown in its header:
 
 ## 2nd) Count the number of kmers at each genomic position
 
-This is done by running the script kmeleon_count.py and the next parameters:
+This is done by running the script **kmeleon_count.py**, which has the next parameters:
 
-`kmeleon_count.py kmers_file min_depth`
+```
+Usage: kmeleon_count.py [OPTIONS] KMERS_FILE
+Note that this software outputs to stderr and stdout.
 
-- kmers_file: a file with kmers by position (the one reported by kmeleon extract with the 'depths' option, for example). \
-It could be in '.gz' extension or not.
-- min_depth: a number which is the minimum depth of a kmer o be considered and counted. For instance 4.
+typical command: kmeleon_count.py -d 4 demo_data/demo.2_19.kmers > demo_data/demo.2_19.counts
 
-For example:
-
-`kmeleon_count.py kmer_chr1_sampleA 4`
+Options:
+  -h, --help            show this help message and exit
+  -d DEPTH_PARAM, --depth=DEPTH_PARAM
+                        The minimum times a k-mer is found to be reported in
+                        the output.(default: 0)
+```
 
 it generates a file with 2 columns (without header):
 
