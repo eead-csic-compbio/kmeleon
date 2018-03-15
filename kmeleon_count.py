@@ -22,6 +22,7 @@ DEFAULT_DEPTH_PARAM = 0
 
 ## Usage
 __usage = "usage: kmeleon_count.py [OPTIONS] KMERS_FILE\n"+\
+          "The KMERS_FILE has the format of the output of kmeleon_extract.py\n"+\
           "Note that this software outputs to stderr and stdout.\n\n"+\
           "typical command: kmeleon_count.py -d 4 demo_data/demo.2_19.kmers > demo_data/demo.2_19.counts"
 optParser = OptionParser(__usage)
@@ -29,6 +30,9 @@ optParser = OptionParser(__usage)
 optParser.add_option('-d', '--depth', action='store', dest='depth_param', type='int', \
                     help='The minimum times a k-mer is found to be reported in the output.'+\
                     '(default: '+str(DEFAULT_DEPTH_PARAM)+')')
+
+########### Read parameters
+###########
 
 (options, arguments) = optParser.parse_args()
 
@@ -93,7 +97,7 @@ for i, line in enumerate(kmers_fileobj):
 
 kmers_fileobj.close()
 
-#sys.stdout.write("@Target\tPosition\tNumber_diff_kmers\n")
+sys.stdout.write("@Target\tPosition\tkmers_count\n")
 for target in refs_list:
     pos_list = refs_dict[target]["pos_list"]
     pos_dict = refs_dict[target]["pos_dict"]

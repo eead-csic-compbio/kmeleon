@@ -167,7 +167,7 @@ def f_get_kmer_contig_position(internal_pos, read_map_pos, read_clipping):
 # Adds a kmer to an absolute position,
 # and counts how many times such kmer has been
 # added to such position (depth of kmer at that position)
-def f_add_kmer_depths(kmer_ref_id, kmer_position, md_z):
+def f_add_kmer_depths(kmer_ref_id, kmer_ref_name, kmer_position, md_z):
     
     #sys.stdout.write(str(kmer_position)+" - "+str(md_z)+"\n")
     
@@ -180,7 +180,7 @@ def f_add_kmer_depths(kmer_ref_id, kmer_position, md_z):
     else:
         pos_dict = {}
         pos_list = []
-        refs_dict[kmer_ref_id] = {"pos_dict":pos_dict, "pos_list":pos_list}
+        refs_dict[kmer_ref_id] = {"pos_dict":pos_dict, "pos_list":pos_list, "ref_name":kmer_ref_name}
         # add new reference to list
         refs_list.append(kmer_ref_id)
     
@@ -225,12 +225,12 @@ def f_add_insertions(expanded_md_z, insertions):
     return res_md
 
 ## Prints all the kmers in a specific position
-def f_print_pos_kmers(kmer_ref_id, kmer_position, pos_kmers_dict, min_depth):
+def f_print_pos_kmers(kmer_ref_name, kmer_position, pos_kmers_dict, min_depth):
     
     for kmer in pos_kmers_dict:
         kmer_count = pos_kmers_dict[kmer]
         if kmer_count >= min_depth:
-            sys.stdout.write(str(input_file.getrname(kmer_ref_id))+"\t"+str(kmer_position)+"\t"+str(kmer)+"\t"+str(kmer_count)+"\n")
+            sys.stdout.write(str(kmer_ref_name)+"\t"+str(kmer_position)+"\t"+str(kmer)+"\t"+str(kmer_count)+"\n")
         
     return
 
@@ -244,6 +244,7 @@ def f_print_previous_kmers(curr_ref_id, curr_pos, min_depth, flush_interval):
     for read_ref_id in refs_list:
         pos_list = refs_dict[read_ref_id]["pos_list"]
         pos_dict = refs_dict[read_ref_id]["pos_dict"]
+        read_ref_name = refs_dict[read_ref_id]["ref_name"]
         
         if read_ref_id in new_refs_dict:
             new_pos_list = new_refs_dict[read_ref_id]["pos_list"]
@@ -251,7 +252,7 @@ def f_print_previous_kmers(curr_ref_id, curr_pos, min_depth, flush_interval):
         else:
             new_pos_list = []
             new_pos_dict = {}
-            new_refs_dict[read_ref_id] = {"pos_dict":new_pos_dict, "pos_list":new_pos_list}
+            new_refs_dict[read_ref_id] = {"pos_dict":new_pos_dict, "pos_list":new_pos_list, "ref_name":read_ref_name}
             new_refs_list.append(read_ref_id)
         
         for kmer_position in pos_list:
@@ -260,10 +261,10 @@ def f_print_previous_kmers(curr_ref_id, curr_pos, min_depth, flush_interval):
                 
                 #sys.stderr.write("Position "+str(kmer_position)+"\n")
                 if curr_ref_id != read_ref_id:
-                    f_print_pos_kmers(read_ref_id, kmer_position, pos_kmers_dict, min_depth)
+                    f_print_pos_kmers(read_ref_name, kmer_position, pos_kmers_dict, min_depth)
                     
                 elif curr_pos - flush_interval > kmer_position:
-                    f_print_pos_kmers(read_ref_id, kmer_position, pos_kmers_dict, min_depth)
+                    f_print_pos_kmers(read_ref_name, kmer_position, pos_kmers_dict, min_depth)
                 else:
                     
                     # Obtain positions of the given reference_id
@@ -312,9 +313,6 @@ __usage = "usage: kmeleon_extract.py [OPTIONS] -b BAM_FILE|-s SAM_FILE\n"+\
           "typical command: kmeleon_extract.py -d 4 -b demo_data/demo.2_19.bam > demo_data/demo.2_19.kmers"
 optParser = OptionParser(__usage)
 
-########### Read parameters
-###########
-
 optParser.add_option('-t', '--target', action='store', dest='target_param', type='string', \
                     help='A chromosome number or name, or a specific contig, or "all" to process all the mappings.'+\
                     '(default: "all".')
@@ -342,6 +340,9 @@ optParser.add_option('-b', '--bam', action='store', dest='bam_param', type='stri
 optParser.add_option('-s', '--sam', action='store', dest='sam_param', type='string', \
                     help='A SAM file to process.'+\
                     'Either the -s or the -b option is required.')
+
+########### Read parameters
+###########
 
 (options, arguments) = optParser.parse_args()
 
@@ -431,7 +432,8 @@ for read in samfile_iter:
     # this is the chromosome or contig of the current mapping
     # however this is an id, to obtain the name we need to do:
     # input_file.getrname(reference_id)
-    read_ref_id = read.reference_id 
+    read_ref_id = read.reference_id
+    read_ref_name = input_file.getrname(read_ref_id)
     
     try:
         read_md_z = read.get_tag("MD")
@@ -495,7 +497,7 @@ for read in samfile_iter:
             kmer_contig_position = f_get_kmer_contig_position(i, ref_pos_start, read_left_clip)
             
             #if store_depths:
-            f_add_kmer_depths(read_ref_id, kmer_contig_position, collapsed_md_z)
+            f_add_kmer_depths(read_ref_id, read_ref_name, kmer_contig_position, collapsed_md_z)
             #else:
             #    f_add_kmer(kmer_contig_position, collapsed_md_z)
         

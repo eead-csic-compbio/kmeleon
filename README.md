@@ -87,9 +87,10 @@ Options:
                         the output.(default: 0)
 ```
 
-it generates a file with 3 columns (without header):
+it generates a file with 3 columns:
 
 ```
+@Target Position    kmers_count
 chr1    11865	1
 chr1    11866	1
 chr1    11867	1
@@ -98,31 +99,35 @@ chr1    11869	1
 chr1    11870	1
 ```
 
-* 1st field: the chromosome or contig.
-* 2nd field: the position within the target (chromosome)
-* 3rd field: the number of different kmers found in that position
+* @ is a symbol used to differentiate the header from the other rows
+* Target: the chromosome or contig of the current position.
+* Position: the current position within the target.
+* kmers_count(MD_Z): the number of different kmers found a the current position.
 
 ## 3rd) Join the kmer counts of all samples in a single table
 
-This is done by running the script kmeleon_table.py and the next parameters:
+This is done by running the script kmeleon_table.py, which has the next parameters:
 
-`kmeleon_table.py samples_list_file target counts_DIR`
+```
+Usage: kmeleon_table.py [OPTIONS] SAMPLES_COUNTS_FILE
+The SAMPLES_COUNTS_FILE has a row for each sample, with tab-separated columns:1st column is the sample name, 2nd column is the path to the counts file,which has the format of the output of kmeleon_count.py
+Note that this software outputs to stderr and stdout.
 
-- samples_list_file: a file with a list of samples to be included in the output table. The format of the file is just a sample name in each row.
-- target: chromosome or target name or number. For example, chr1.
-- counts_DIR: a path to the directory  where the files with counts (from kmeleon count) can be found. Note that the files in this folder must be in '.gz' format, \
-and will have the next filename format:
+typical command: kmeleon_table.py -D demo_data demo_data/demo_samples_list > demo_data/demo_counts.table
 
-`counts_DIR/sample_name.target.counts.out.gz`
-
-For example:
-
-`kmeleon_table.py my_samples chr1 counts`
+Options:
+  -h, --help            show this help message and exit
+  -D DIR_PARAM, --DIR=DIR_PARAM
+                        The directory where the files with counts for the
+                        samples are located.Note that this is unnecessary if
+                        the directory has been included in every path within
+                        the SAMPLES_COUNTS_FILES(default: ./)
+```
 
 it generates a file with a header and n+1 columns, where n = number of samples.:
 
 ```
-Pos	sample1	sample2	...	sampleN
+@Target Position	sample1	sample2	...	sampleN
 11865   1	1	...	1
 11866   1	2	...	1
 11867   1	2	...	1
@@ -131,8 +136,10 @@ Pos	sample1	sample2	...	sampleN
 11870   3	1	...	0
 ```
 
-* Pos: the position within the target (chromosome)
-* sample1...sampleN: the number of different kmers found in that position for a given sample
+* @ is a symbol used to differentiate the header from the other rows
+* Target: the chromosome or contig of the current position.
+* Position: the current position within the target.
+* sample1...sampleN: the kmers_count (number of different kmers found) in the current position for each sample
 
 ## 4th) Translate the position-based kmer counts to intervals of constant kmer count
 
