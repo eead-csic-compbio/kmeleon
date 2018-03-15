@@ -164,35 +164,27 @@ def f_get_kmer_contig_position(internal_pos, read_map_pos, read_clipping):
     
     return kmer_pos
 
-# Adds a kmer to an absolute position
-def f_add_kmer(kmer_position, md_z):
-    
-    #sys.stdout.write(str(kmer_position)+" - "+str(md_z)+"\n")
-    
-    md_z_string = "".join([str(x) for x in md_z])
-    
-    if kmer_position in pos_dict:
-        pos_kmers_list = pos_dict[kmer_position]
-        if md_z_string not in set(pos_kmers_list):
-            pos_kmers_list.append(md_z_string)
-        
-    else:
-        pos_dict[kmer_position] = [md_z_string]
-        
-        # additionally, add position to list
-        pos_list.append(kmer_position)
-    
-    return
-
 # Adds a kmer to an absolute position,
 # and counts how many times such kmer has been
 # added to such position (depth of kmer at that position)
-def f_add_kmer_depths(kmer_position, md_z):
+def f_add_kmer_depths(kmer_ref_id, kmer_position, md_z):
     
     #sys.stdout.write(str(kmer_position)+" - "+str(md_z)+"\n")
     
     md_z_string = "".join([str(x) for x in md_z])
     
+    # Obtain positions of the given reference_id
+    if kmer_ref_id in refs_dict:
+        pos_dict = refs_dict[kmer_ref_id]["pos_dict"]
+        pos_list = refs_dict[kmer_ref_id]["pos_list"]
+    else:
+        pos_dict = {}
+        pos_list = []
+        refs_dict[kmer_ref_id] = {"pos_dict":pos_dict, "pos_list":pos_list}
+        # add new reference to list
+        refs_list.append(kmer_ref_id)
+    
+    # add the kmer or increase its count
     if kmer_position in pos_dict:
         pos_kmers_dict = pos_dict[kmer_position]
         if md_z_string in pos_kmers_dict:
@@ -204,7 +196,6 @@ def f_add_kmer_depths(kmer_position, md_z):
         pos_kmers_dict = {}
         pos_kmers_dict[md_z_string] = 1
         pos_dict[kmer_position] = pos_kmers_dict
-        
         # additionally, add position to list
         pos_list.append(kmer_position)
     
@@ -233,32 +224,54 @@ def f_add_insertions(expanded_md_z, insertions):
     
     return res_md
 
+## Prints all the kmers in a specific position
+def f_print_pos_kmers(kmer_ref_id, kmer_position, pos_kmers_dict, min_depth):
+    
+    for kmer in pos_kmers_dict:
+        kmer_count = pos_kmers_dict[kmer]
+        if kmer_count >= min_depth:
+            sys.stdout.write(str(input_file.getrname(kmer_ref_id))+"\t"+str(kmer_position)+"\t"+str(kmer)+"\t"+str(kmer_count)+"\n")
+        
+    return
+
 ##
-def f_print_previous_kmers(curr_pos, min_depth, flush_interval):
-    new_list = []
-    new_dict = {}
+def f_print_previous_kmers(curr_ref_id, curr_pos, min_depth, flush_interval):
+    new_refs_list = []
+    new_refs_dict = {}
     
     ################ Generate output
     # Rows
-    for kmer_position in pos_list:
-        if kmer_position in pos_dict:
-            pos_kmers_dict = pos_dict[kmer_position]
-            
-            #sys.stderr.write("Position "+str(kmer_position)+"\n")
-            if curr_pos - flush_interval > kmer_position:
-                for kmer in pos_kmers_dict:
-                    #if store_depths:
-                    kmer_count = pos_kmers_dict[kmer]
-                    if kmer_count >= min_depth:
-                        sys.stdout.write(str(kmer_position)+"\t"+str(kmer)+"\t"+str(kmer_count)+"\n")
-                    #else:
-                    #    sys.stdout.write(str(kmer_position)+"\t"+str(kmer)+"\n")
-            else:
-                new_list.append(kmer_position)
-                new_dict[kmer_position] = pos_kmers_dict
-            
+    for read_ref_id in refs_list:
+        pos_list = refs_dict[read_ref_id]["pos_list"]
+        pos_dict = refs_dict[read_ref_id]["pos_dict"]
+        
+        if read_ref_id in new_refs_dict:
+            new_pos_list = new_refs_dict[read_ref_id]["pos_list"]
+            new_pos_dict = new_refs_dict[read_ref_id]["pos_dict"]
         else:
-            raise Exception("Position "+str(kmer_position)+" is not in dict")
+            new_pos_list = []
+            new_pos_dict = {}
+            new_refs_dict[read_ref_id] = {"pos_dict":new_pos_dict, "pos_list":new_pos_list}
+            new_refs_list.append(read_ref_id)
+        
+        for kmer_position in pos_list:
+            if kmer_position in pos_dict:
+                pos_kmers_dict = pos_dict[kmer_position]
+                
+                #sys.stderr.write("Position "+str(kmer_position)+"\n")
+                if curr_ref_id != read_ref_id:
+                    f_print_pos_kmers(read_ref_id, kmer_position, pos_kmers_dict, min_depth)
+                    
+                elif curr_pos - flush_interval > kmer_position:
+                    f_print_pos_kmers(read_ref_id, kmer_position, pos_kmers_dict, min_depth)
+                else:
+                    
+                    # Obtain positions of the given reference_id
+                    new_pos_list.append(kmer_position)
+                    new_pos_dict[kmer_position] = pos_kmers_dict
+                
+            else:
+                raise Exception("Position "+str(kmer_position)+" is not in dict")
     
     #print "AFTER FLUSH"
     #print curr_pos
@@ -267,7 +280,7 @@ def f_print_previous_kmers(curr_pos, min_depth, flush_interval):
     #print pos_list[-1]
     #print pos_dict[pos_list[-1]]
     
-    return (new_list, new_dict)
+    return (new_refs_list, new_refs_dict)
 
 ################ MAIN
 ################
@@ -389,8 +402,10 @@ sys.stderr.write("Reading file "+input_file_param+" to process target "+target_p
 #kmer_param = 50
 window_side = kmer_param / 2
 
-pos_dict = {}
-pos_list = []
+refs_dict = {} # chromosome, contig, ...
+refs_list = [] # a list of chromosomes, contigs, ...
+pos_dict = {} # a base pairs position
+pos_list = [] # a list of base pairs positions
 
 ## TODO: Add exception handling to this
 input_file = get_input_file(input_file_param, file_type)
@@ -413,6 +428,10 @@ for read in samfile_iter:
     if read.is_unmapped: continue
     
     read_id = read.query_name
+    # this is the chromosome or contig of the current mapping
+    # however this is an id, to obtain the name we need to do:
+    # input_file.getrname(reference_id)
+    read_ref_id = read.reference_id 
     
     try:
         read_md_z = read.get_tag("MD")
@@ -476,7 +495,7 @@ for read in samfile_iter:
             kmer_contig_position = f_get_kmer_contig_position(i, ref_pos_start, read_left_clip)
             
             #if store_depths:
-            f_add_kmer_depths(kmer_contig_position, collapsed_md_z)
+            f_add_kmer_depths(read_ref_id, kmer_contig_position, collapsed_md_z)
             #else:
             #    f_add_kmer(kmer_contig_position, collapsed_md_z)
         
@@ -484,20 +503,20 @@ for read in samfile_iter:
         # Header
         if not header_printed:
             #if store_depths:
-            sys.stdout.write("@Position\tkmer(MD_Z)\tdepth\n")
+            sys.stdout.write("@Target\tPosition\tkmer(MD_Z)\tdepth\n")
             #else:
             #    sys.stdout.write("@ Position\tMD_Z\n")
             header_printed = True
         
         if ref_pos_start - FLUSH_INTERVAL*2 > first_to_flush_pos:
-            (pos_list, pos_dict) = f_print_previous_kmers(ref_pos_start, depth_param, FLUSH_INTERVAL)
+            (refs_list, refs_dict) = f_print_previous_kmers(read_ref_id, ref_pos_start, depth_param, FLUSH_INTERVAL)
             #print "POS RANGE"
             #print read
             #print pos_range
             #print read_pos_start
             #print read_pos_end
             #print window_side
-            first_to_flush_pos = pos_list[0]
+            first_to_flush_pos = refs_dict[refs_list[0]]["pos_list"][0]
     
     numreads_processed+=1
     if (numreads_processed % 1000 == 0):
@@ -507,20 +526,18 @@ input_file.close()
 
 ################ Generate output for the remaining data
 # Rows
-for kmer_position in pos_list:
-    if kmer_position in pos_dict:
-        #sys.stderr.write("Position "+str(kmer_position)+"\n")
-        pos_kmers_dict = pos_dict[kmer_position]
-        for kmer in pos_kmers_dict:
-            #if store_depths:
-            kmer_count = pos_kmers_dict[kmer]
-            if kmer_count >= depth_param:
-                sys.stdout.write(str(kmer_position)+"\t"+str(kmer)+"\t"+str(kmer_count)+"\n")
-            #else:
-            #    sys.stdout.write(str(kmer_position)+"\t"+str(kmer)+"\n")
-        
-    else:
-        raise Exception("Position "+str(kmer_position)+" is not in dict")
+for read_ref_id in refs_list:
+    pos_list = refs_dict[read_ref_id]["pos_list"]
+    pos_dict = refs_dict[read_ref_id]["pos_dict"]
+    
+    for kmer_position in pos_list:
+        if kmer_position in pos_dict:
+            #sys.stderr.write("Position "+str(kmer_position)+"\n")
+            pos_kmers_dict = pos_dict[kmer_position]
+            f_print_pos_kmers(read_ref_id, kmer_position, pos_kmers_dict, depth_param)
+            
+        else:
+            raise Exception("Position "+str(kmer_position)+" is not in dict")
     
 sys.stderr.write("Finished.\n")
 

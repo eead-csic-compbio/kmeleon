@@ -53,16 +53,16 @@ Options:
                         is required.
 ```
 
-it generates a file with 3 columns, as shown in its header:
+it generates a file with 4 columns, as shown in its header:
 
 ```
-@Position	kmer(MD_Z)	depth
-2917	51	1
-2918	51	1
-2919	51	1
-2920	51	1
-2921	51	1
-2922	51	1
+@Target Position	kmer(MD_Z)	depth
+chr1   2917	51	1
+chr1   2918	51	1
+chr1   2919	51	1
+chr1    2920	51	1
+chr1    2921	51	1
+chr1    2922	51	1
 ```
 
 * @ is a symbol used to differentiate the header from the other rows

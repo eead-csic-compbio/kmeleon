@@ -13,6 +13,11 @@ sys.stderr.write("Running kmeleon count...\n")
 
 ################ GLOBALS AND PARAMETERS
 
+KMERS_FILE_FIELD_TARGET = 0
+KMERS_FILE_FIELD_POSITION = 1
+KMERS_FILE_FIELD_KMER = 2
+KMERS_FILE_FIELD_DEPTH = 3
+
 DEFAULT_DEPTH_PARAM = 0
 
 ## Usage
@@ -42,8 +47,8 @@ else:
 #########################
 ######################### BEGIN
 
-pos_dict = {}
-pos_list = []
+refs_dict = {}
+refs_list = []
 
 ext_pos = kmers_file.rfind(".")
 ext = kmers_file[ext_pos+1:]
@@ -62,11 +67,21 @@ for i, line in enumerate(kmers_fileobj):
     
     #sys.stderr.write(str(line_data)+"\n")
     
-    md_z_count = int(line_data[2])
+    md_z_count = int(line_data[KMERS_FILE_FIELD_DEPTH])
     if md_z_count < depth_param: continue
     
-    pos = int(line_data[0])
-    md_z = line_data[1]
+    target = line_data[KMERS_FILE_FIELD_TARGET]
+    pos = int(line_data[KMERS_FILE_FIELD_POSITION])
+    md_z = line_data[KMERS_FILE_FIELD_KMER]
+    
+    if target in refs_dict:
+        pos_dict = refs_dict[target]["pos_dict"]
+        pos_list = refs_dict[target]["pos_list"]
+    else:
+        pos_dict = {}
+        pos_list = []
+        refs_dict[target] = {"pos_dict":pos_dict, "pos_list":pos_list}
+        refs_list.append(target)
     
     if pos in pos_dict:
         #pos_kmer_count = pos_dict[pos]
@@ -78,13 +93,17 @@ for i, line in enumerate(kmers_fileobj):
 
 kmers_fileobj.close()
 
-#sys.stdout.write("@ Position\tNumber_diff_kmers\n")
-for pos in sorted(pos_list):
-    if pos in pos_dict:
-        pos_kmer_count = pos_dict[pos]
-        sys.stdout.write(str(pos)+"\t"+str(pos_kmer_count)+"\n")
-    else:
-        raise Exception("Position "+str(pos)+" is not in dict")
+#sys.stdout.write("@Target\tPosition\tNumber_diff_kmers\n")
+for target in refs_list:
+    pos_list = refs_dict[target]["pos_list"]
+    pos_dict = refs_dict[target]["pos_dict"]
+    
+    for pos in sorted(pos_list):
+        if pos in pos_dict:
+            pos_kmer_count = pos_dict[pos]
+            sys.stdout.write(str(target)+"\t"+str(pos)+"\t"+str(pos_kmer_count)+"\n")
+        else:
+            raise Exception("Position "+str(pos)+" is not in dict")
 
 sys.stderr.write("Finished.\n")
 
