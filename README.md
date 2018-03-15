@@ -53,7 +53,7 @@ Options:
                         is required.
 ```
 
-it generates a file with 4 columns, as shown in its header:
+It generates a file with 4 columns, as shown in its header:
 
 ```
 @Target Position	kmer(MD_Z)	depth
@@ -87,7 +87,7 @@ Options:
                         the output.(default: 0)
 ```
 
-it generates a file with 3 columns:
+It generates a file with 3 columns:
 
 ```
 @Target Position    kmers_count
@@ -124,7 +124,8 @@ Options:
                         the SAMPLES_COUNTS_FILES(default: ./)
 ```
 
-it generates a file with a header and n+1 columns, where n = number of samples.:
+An example of a SAMPLES_COUNTS_FILE can be found at [demo_data/demo_samples_list](demo_data/demo_samples_list)
+It generates a file with a header and n+1 columns, where n = number of samples.:
 
 ```
 @Target Position	sample1	sample2	...	sampleN
