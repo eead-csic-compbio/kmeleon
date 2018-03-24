@@ -39,7 +39,8 @@ def f_add_to_interval(interval, target, pos, count):
     return
 
 def f_compute_count(window):
-    window["count"] = mean(window["counts"])*1.0
+    window["count"] = mean([count for count in window["counts"] if count>0])*1.0
+    #window["count"] = mean(window["counts"])*1.0
     return
 
 def f_get_remaining(window, window_param):
