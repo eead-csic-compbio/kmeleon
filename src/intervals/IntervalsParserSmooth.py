@@ -12,7 +12,7 @@ from IntervalsParserBinary import f_add_to_interval
 
 ## MODE SMOOTH
 
-def f_new_interval_smooth(prev_interval, target, start, count):
+def f_new_interval(prev_interval, target, start, count):
     new_interval = {}
     
     new_interval["target"] = target
@@ -187,7 +187,7 @@ def f_store_intervals(counts_fileobj):
             if curr_interval:
                 prev_interval = f_add_to_interval(curr_interval, prev_target, prev_pos, prev_count)
             
-            curr_interval = f_new_interval_smooth(prev_interval, curr_target, curr_pos, curr_count)
+            curr_interval = f_new_interval(prev_interval, curr_target, curr_pos, curr_count)
             intervals_list.append(curr_interval)
             
             f_add_next_interval(prev_interval, curr_interval)
@@ -203,7 +203,7 @@ def f_store_intervals(counts_fileobj):
     if curr_interval:
         prev_interval = f_add_to_interval(curr_interval, prev_target, prev_pos, prev_count)
     
-    curr_interval = f_new_interval_smooth(prev_interval, curr_target, curr_pos, curr_count)
+    curr_interval = f_new_interval(prev_interval, curr_target, curr_pos, curr_count)
     intervals_list.append(curr_interval)
     
     f_add_next_interval(prev_interval, curr_interval)
