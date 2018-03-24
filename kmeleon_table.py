@@ -9,8 +9,6 @@ from optparse import OptionParser
 ################ MAIN
 ################
 
-sys.stderr.write("Running kmeleon table...\n")
-
 ################ GLOBALS AND PARAMETERS
 
 COUNTS_FILE_FIELD_TARGET = 0
@@ -40,6 +38,8 @@ optParser.add_option('-D', '--DIR', action='store', dest='dir_param', type='stri
 ###########
 
 (options, arguments) = optParser.parse_args()
+
+sys.stderr.write("Running kmeleon table...\n")
 
 # THIS IS MANDATORY
 if not arguments or len(arguments)==0:
