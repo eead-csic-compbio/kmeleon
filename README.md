@@ -106,7 +106,7 @@ chr1    11870	1
 
 ## 3rd) Join the kmer counts of all samples in a single table
 
-This is done by running the script kmeleon_table.py, which has the next parameters:
+This is done by running the script **kmeleon_table.py**, which has the next parameters:
 
 ```
 Usage: kmeleon_table.py [OPTIONS] SAMPLES_COUNTS_FILE

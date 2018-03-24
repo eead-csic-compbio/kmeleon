@@ -334,11 +334,11 @@ optParser.add_option('-d', '--depth', action='store', dest='depth_param', type='
                     '(default: '+str(DEFAULT_DEPTH_PARAM)+')')
 
 optParser.add_option('-b', '--bam', action='store', dest='bam_param', type='string', \
-                    help='A BAM file to process.'+\
+                    help='A BAM file to process. '+\
                     'Either the -b or the -s option is required.')
 
 optParser.add_option('-s', '--sam', action='store', dest='sam_param', type='string', \
-                    help='A SAM file to process.'+\
+                    help='A SAM file to process. '+\
                     'Either the -s or the -b option is required.')
 
 ########### Read parameters
@@ -531,12 +531,13 @@ input_file.close()
 for read_ref_id in refs_list:
     pos_list = refs_dict[read_ref_id]["pos_list"]
     pos_dict = refs_dict[read_ref_id]["pos_dict"]
+    read_ref_name = refs_dict[read_ref_id]["ref_name"]
     
     for kmer_position in pos_list:
         if kmer_position in pos_dict:
             #sys.stderr.write("Position "+str(kmer_position)+"\n")
             pos_kmers_dict = pos_dict[kmer_position]
-            f_print_pos_kmers(read_ref_id, kmer_position, pos_kmers_dict, depth_param)
+            f_print_pos_kmers(read_ref_name, kmer_position, pos_kmers_dict, depth_param)
             
         else:
             raise Exception("Position "+str(kmer_position)+" is not in dict")
