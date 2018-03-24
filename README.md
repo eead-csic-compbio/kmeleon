@@ -46,17 +46,17 @@ Options:
                         The minimum times a k-mer is found to be reported in
                         the output.(default: 0)
   -b BAM_PARAM, --bam=BAM_PARAM
-                        A BAM file to process.Either the -b or the -s option
+                        A BAM file to process. Either the -b or the -s option
                         is required.
   -s SAM_PARAM, --sam=SAM_PARAM
-                        A SAM file to process.Either the -s or the -b option
+                        A SAM file to process. Either the -s or the -b option
                         is required.
 ```
 
 It generates a file with 4 columns, as shown in its header:
 
 ```
-@Target Position	kmer(MD_Z)	depth
+@Target Position	kmer(md_z)	dp
 chr1   2917	51	1
 chr1   2918	51	1
 chr1   2919	51	1
@@ -67,8 +67,8 @@ chr1    2922	51	1
 
 * @ is a symbol used to differentiate the header from the other rows
 * Position: the position within the target (chromosome)
-* kmer(MD_Z): a kmer found in such position, in SAM/BAM file MD_Z field format
-* depth: the times that this kmer has been observed at this position.
+* kmer(md_z): a kmer found in such position, in SAM/BAM file MD_Z field format
+* dp: depth, i.e. times this kmer has been observed at this position.
 
 ## 2nd) Count the number of kmers at each genomic position
 
@@ -76,6 +76,7 @@ This is done by running the script **kmeleon_count.py**, which has the next para
 
 ```
 Usage: kmeleon_count.py [OPTIONS] KMERS_FILE
+The KMERS_FILE has the format of the output of kmeleon_extract.py
 Note that this software outputs to stderr and stdout.
 
 typical command: kmeleon_count.py -d 4 demo_data/demo.2_19.kmers > demo_data/demo.2_19.counts
@@ -87,22 +88,23 @@ Options:
                         the output.(default: 0)
 ```
 
-It generates a file with 3 columns:
+It generates a file with 4 columns:
 
 ```
-@Target Position    kmers_count
-chr1    11865	1
-chr1    11866	1
-chr1    11867	1
-chr1    11868	1
-chr1    11869	1
-chr1    11870	1
+@Target Position    kc	dp
+chr1    11865	1	14
+chr1    11866	1	14
+chr1    11867	1	17
+chr1    11868	1	21
+chr1    11869	1	20
+chr1    11870	1	16
 ```
 
 * @ is a symbol used to differentiate the header from the other rows
 * Target: the chromosome or contig of the current position.
 * Position: the current position within the target.
-* kmers_count(MD_Z): the number of different kmers found a the current position.
+* kc: the number of different kmers found at the current position.
+* dp: depth, total number of kmers found at the current position.
 
 ## 3rd) Join the kmer counts of all samples in a single table
 

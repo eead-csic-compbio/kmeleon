@@ -286,8 +286,6 @@ def f_print_previous_kmers(curr_ref_id, curr_pos, min_depth, flush_interval):
 ################ MAIN
 ################
 
-sys.stderr.write("Running kmeleon extract...\n")
-
 ################ GLOBALS AND PARAMETERS
 
 VERBOSE_ALL = 5
@@ -345,6 +343,8 @@ optParser.add_option('-s', '--sam', action='store', dest='sam_param', type='stri
 ###########
 
 (options, arguments) = optParser.parse_args()
+
+sys.stderr.write("Running kmeleon extract...\n")
 
 ## Target
 if options.target_param:
@@ -505,7 +505,7 @@ for read in samfile_iter:
         # Header
         if not header_printed:
             #if store_depths:
-            sys.stdout.write("@Target\tPosition\tkmer(MD_Z)\tdepth\n")
+            sys.stdout.write("@Target\tPosition\tkmer(md_z)\tdp\n")
             #else:
             #    sys.stdout.write("@ Position\tMD_Z\n")
             header_printed = True
