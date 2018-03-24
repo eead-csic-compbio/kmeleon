@@ -90,22 +90,24 @@ for i, line in enumerate(kmers_fileobj):
     if pos in pos_dict:
         #pos_kmer_count = pos_dict[pos]
         #pos_kmer_count+=1#.append(md_z)
-        pos_dict[pos]+=1
+        pos_dict[pos]["kc"]+=1
+        pos_dict[pos]["dp"]+=md_z_count
     else:
-        pos_dict[pos] = 1#[md_z]
+        pos_dict[pos] = {"dp":md_z_count, "kc":1} #kc = k-mer count; dp = depth
         pos_list.append(pos)
 
 kmers_fileobj.close()
 
-sys.stdout.write("@Target\tPosition\tkmers_count\n")
+sys.stdout.write("@Target\tPosition\tkc\tdp\n")
 for target in refs_list:
     pos_list = refs_dict[target]["pos_list"]
     pos_dict = refs_dict[target]["pos_dict"]
     
     for pos in sorted(pos_list):
         if pos in pos_dict:
-            pos_kmer_count = pos_dict[pos]
-            sys.stdout.write(str(target)+"\t"+str(pos)+"\t"+str(pos_kmer_count)+"\n")
+            pos_kmer_count = pos_dict[pos]["kc"]
+            pos_depth = pos_dict[pos]["dp"]
+            sys.stdout.write(str(target)+"\t"+str(pos)+"\t"+str(pos_kmer_count)+"\t"+str(pos_depth)+"\n")
         else:
             raise Exception("Position "+str(pos)+" is not in dict")
 
