@@ -21,18 +21,24 @@ SAMPLES_FILE_FIELD_PATH = 1
 DEFAULT_DIR_PARAM = "./"
 
 ## Usage
-__usage = "usage: kmeleon_table.py [OPTIONS] SAMPLES_COUNTS_FILE\n"+\
-          "The SAMPLES_COUNTS_FILE has a row for each sample, with tab-separated columns:"+\
-          "1st column is the sample name, 2nd column is the path to the counts file,"+\
-          "which has the format of the output of kmeleon_count.py\n"+\
+__usage = "usage: kmeleon_table.py [OPTIONS] SAMPLES_FILE\n"+\
+          "The SAMPLES_FILE has a row for each sample, with tab-separated columns:"+\
+          "1st column is the sample name, 2nd column is the path to the counts or intervals file,"+\
+          "which has the format of the output of \"kmeleon_count.py\" or \"kmeleon_intervals -m windows\", respectively.\n"+\
           "Note that this software outputs to stderr and stdout.\n\n"+\
-          "typical command: kmeleon_table.py -D demo_data demo_data/demo_samples.list > demo_data/demo_counts.table"
+          "typical command: kmeleon_table.py -D demo_data demo_data/demo_counts.list > demo_data/demo_counts.table\n"+\
+          "typical command: kmeleon_table.py -w -D demo_data demo_data/demo_windows.list > demo_data/demo_windows.table"
 optParser = OptionParser(__usage)
 
 optParser.add_option('-D', '--DIR', action='store', dest='dir_param', type='string', \
                     help='The directory where the files with counts for the samples are located.'+\
                     'Note that this is unnecessary if the directory has been included in every path within the SAMPLES_COUNTS_FILES'
                     '(default: '+str(DEFAULT_DIR_PARAM)+')')
+
+optParser.add_option('-w', action='store_true', dest="windows_mode", \
+                     help="If this flag is set, the input data should be intervals of fixed length and positions for all samples. "+\
+                      'i.e. as those produced by "kmeleon_intervals.py -m windows". '+\
+                      'If -w is not set, the input data expected will be kmer counts as those produced with "kmeleon_count.py".')
 
 ########### Read parameters
 ###########

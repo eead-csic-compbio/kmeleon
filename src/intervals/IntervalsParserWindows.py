@@ -22,16 +22,38 @@ def f_is_new_interval(curr_target, curr_pos, curr_count, prev_target, prev_pos, 
     
     return is_new_interval
 
-def f_new_interval(target, start, count=0):
+def f_new_interval(target, start, window_param, count=0):
     new_interval = {}
     
     new_interval["target"] = target
-    new_interval["start"] = start-1
-    new_interval["end"] = start-1 # an empty window
+    
+    # the new interval previously used start as start and end position
+    # (see f_new_interval function commented below)
+    # however, to make all the samples comparable
+    # all the intervals start always in the closest factor
+    # of the window size
+    # e.g. a start at position 1615 will create a window starting
+    # at 1500 if the window_param = 500,
+    # or at 1600 if the window_param = 100 or 50
+    remaind = start % window_param
+    intvstart = start - remaind + 1
+    new_interval["start"] = intvstart-1
+    new_interval["end"] = intvstart-1 # an empty window
     new_interval["count"] = count
     new_interval["counts"] = []
     
     return new_interval
+
+#def f_new_interval(target, start, window_param, count=0):
+#    new_interval = {}
+#    
+#    new_interval["target"] = target
+#    new_interval["start"] = start-1
+#    new_interval["end"] = start-1 # an empty window
+#    new_interval["count"] = count
+#    new_interval["counts"] = []
+#    
+#    return new_interval
 
 def f_add_to_interval(interval, target, pos, count):
     interval["end"] = pos
@@ -75,7 +97,7 @@ def f_windows(counts_fileobj, window_param):
         curr_count = int(line_data[COUNTS_FILE_FIELD_COUNT])
         
         if not current_window:
-            current_window = f_new_interval(curr_target, curr_pos)
+            current_window = f_new_interval(curr_target, curr_pos, window_param)
             f_add_to_interval(current_window, curr_target, curr_pos, curr_count)
         else: # there is current window
             is_new_interval = f_is_new_interval(curr_target, curr_pos, curr_count, prev_target, prev_pos, prev_count)
@@ -94,7 +116,7 @@ def f_windows(counts_fileobj, window_param):
                         f_compute_count(current_window)
                         intervals_list.append(current_window)
                     # create a new window
-                    current_window = f_new_interval(curr_target, curr_pos)
+                    current_window = f_new_interval(curr_target, curr_pos, window_param)
             # else: fill the current window
             
             f_add_to_interval(current_window, curr_target, curr_pos, curr_count)
