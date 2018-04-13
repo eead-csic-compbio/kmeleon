@@ -170,8 +170,8 @@ Options:
                         Requires -m windows. The size of the window for which
                         median k-mer counts will be processed. (default: 50)
 ```
-
-kmeleon_intervals generates a file in BED-like format without header and with 4 columns:
+kmeleon_intervals.py reads a file with kmer counts to create intervals of constant or homogeneous kmer count.
+It generates a file in BED-like format without header and with 4 columns:
 
 ```
 chr1	41868	41871	1
@@ -193,7 +193,6 @@ chr1	42391	42420	2
 
 **What do the different modes do?**
 
-kmeleon_intervals.py reads a file with kmer counts to create intervals of constant or homogeneous kmer count.
 In **"raw" mode** (-m raw) the intervals and their associated values correspond directly to the kmer counts found.
 
 For example, the kmer counts in:
@@ -244,9 +243,8 @@ the interval count will be changed to that smaller k-mer count.
 * If the adjacent intervals are of greater k-mer count
 the interval count will be changed to that greater k-mer count.
 
-Note that first of carrying over the smoothing, the intervals
-are sorted, so that those intervals with greater k-mer count are
-processed first.
+Note that first of all, the intervals are internally sorted,
+and thus those intervals with largest k-mer count are processed first.
 
 For example, with --span 50, the kmer counts in:
 
@@ -265,7 +263,7 @@ chr1    11989	3	20
 chr1    12989	3	16
 ```
 
-would translate into:
+would translate into: (the positions with kc = 2 have been smoothed to kc = 1)
 
 ```
 chr1	11864	11988	1
@@ -274,7 +272,7 @@ chr1	11988	12989	3
 ```
 
 In **"windows" mode** (-m windows) each reported interval corresponds to a sliding window of fixed length.
-In "windows" mode the --span parameter is ignored. Instead, the --window (-w) parameter can be used to determine
+In this mode the --span parameter is ignored. Instead, the --window (-w) parameter can be used to determine
 the size of sliding windows to use. The value returned for each window is the mean of kmer counts for all the
 bases within that window.
 
