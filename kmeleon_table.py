@@ -26,7 +26,7 @@ __usage = "usage: kmeleon_table.py [OPTIONS] SAMPLES_COUNTS_FILE\n"+\
           "1st column is the sample name, 2nd column is the path to the counts file,"+\
           "which has the format of the output of kmeleon_count.py\n"+\
           "Note that this software outputs to stderr and stdout.\n\n"+\
-          "typical command: kmeleon_table.py -D demo_data demo_data/demo_samples_list > demo_data/demo_counts.table"
+          "typical command: kmeleon_table.py -D demo_data demo_data/demo_samples.list > demo_data/demo_counts.table"
 optParser = OptionParser(__usage)
 
 optParser.add_option('-D', '--DIR', action='store', dest='dir_param', type='string', \
