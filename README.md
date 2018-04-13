@@ -66,6 +66,7 @@ chr1    2922	51	1
 ```
 
 * @ is a symbol used to differentiate the header from the other rows
+* Target: the chromosome or contig of the current position.
 * Position: the position within the target (chromosome)
 * kmer(md_z): a kmer found in such position, in SAM/BAM file MD_Z field format
 * dp: depth, i.e. times this kmer has been observed at this position.
