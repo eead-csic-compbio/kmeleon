@@ -116,7 +116,7 @@ Usage: kmeleon_table.py [OPTIONS] SAMPLES_COUNTS_FILE
 The SAMPLES_COUNTS_FILE has a row for each sample, with tab-separated columns:1st column is the sample name, 2nd column is the path to the counts file,which has the format of the output of kmeleon_count.py
 Note that this software outputs to stderr and stdout.
 
-typical command: kmeleon_table.py -D demo_data demo_data/demo_samples_list > demo_data/demo_counts.table
+typical command: kmeleon_table.py -D demo_data demo_data/demo_samples.list > demo_data/demo_counts.table
 
 Options:
   -h, --help            show this help message and exit
@@ -127,7 +127,7 @@ Options:
                         the SAMPLES_COUNTS_FILES(default: ./)
 ```
 
-An example of a SAMPLES_COUNTS_FILE can be found at [demo_data/demo_samples_list](demo_data/demo_samples_list)
+An example of a SAMPLES_COUNTS_FILE can be found at [demo_data/demo_samples.list](demo_data/demo_samples.list)
 It generates a file with a header and n+1 columns, where n = number of samples.:
 
 ```
