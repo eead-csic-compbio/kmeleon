@@ -324,7 +324,7 @@ optParser.add_option('--end', action='store', dest='end_param', type='int', \
                     '(default: '+str(DEFAULT_END_PARAM)+')')
 
 optParser.add_option('-k', '--kmer', action='store', dest='kmer_param', type='int', \
-                    help='A number, which will translate to "k"=number+1, to parse fragments (k-mers) of length "k".'+\
+                    help='The length of fragments (k-mers) to parse. '+\
                     '(default: '+str(DEFAULT_KMER_PARAM)+')')
 
 optParser.add_option('-d', '--depth', action='store', dest='depth_param', type='int', \

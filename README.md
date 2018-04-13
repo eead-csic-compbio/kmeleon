@@ -40,8 +40,8 @@ Options:
                         position to process within the given target.(default:
                         -1)
   -k KMER_PARAM, --kmer=KMER_PARAM
-                        A number, which will translate to "k"=number+1, to
-                        parse fragments (k-mers) of length "k".(default: 50)
+                        The length of fragments (k-mers) to parse. (default:
+                        50)
   -d DEPTH_PARAM, --depth=DEPTH_PARAM
                         The minimum times a k-mer is found to be reported in
                         the output.(default: 0)
