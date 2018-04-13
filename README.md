@@ -14,9 +14,9 @@ There are several steps to run a complete kmeleon analysis:
 * [Count the number of kmers at each genomic position: kmeleon_count.py](https://github.com/eead-csic-compbio/kmeleon#2nd-count-the-number-of-kmers-at-each-genomic-position)
 
 There are also other tools to manage the results:
-* [Join the kmer counts of all samples in a single table: kmeleon_table.py](https://github.com/eead-csic-compbio/kmeleon#3rd-join-the-kmer-counts-of-all-samples-in-a-single-table)
-* [Translate the position-based kmer counts to intervals of constant kmer count](https://github.com/eead-csic-compbio/kmeleon#4th-translate-the-position-based-kmer-counts-to-intervals-of-constant-kmer-count)
-* [Obtain a matrix of pairwise distances or similarities based on intersection of intervals between samples](https://github.com/eead-csic-compbio/kmeleon#5th-obtain-a-matrix-of-pairwise-distances-or-similarities-based-on-intersection-of-intervals-between-samples)
+* [Translate the position-based kmer counts to intervals of constant kmer count](https://github.com/eead-csic-compbio/kmeleon#Translate-the-position-based-kmer-counts-to-intervals-of-constant-kmer-count)
+* [Join the kmer counts of all samples in a single table: kmeleon_table.py](https://github.com/eead-csic-compbio/kmeleon#Join-the-kmer-counts-of-all-samples-in-a-single-table)
+* [Obtain a matrix of pairwise distances or similarities based on intersection of intervals between samples](https://github.com/eead-csic-compbio/kmeleon#Obtain-a-matrix-of-pairwise-distances-or-similarities-based-on-intersection-of-intervals-between-samples)
 
 ## 1st) Extract the kmers from the mappings
 
@@ -107,45 +107,7 @@ chr1    11870	1	16
 * kc: the number of different kmers found at the current position.
 * dp: depth, total number of kmers found at the current position.
 
-## 3rd) Join the kmer counts of all samples in a single table
-
-This is done by running the script **kmeleon_table.py**, which has the next parameters:
-
-```
-Usage: kmeleon_table.py [OPTIONS] SAMPLES_COUNTS_FILE
-The SAMPLES_COUNTS_FILE has a row for each sample, with tab-separated columns:1st column is the sample name, 2nd column is the path to the counts file,which has the format of the output of kmeleon_count.py
-Note that this software outputs to stderr and stdout.
-
-typical command: kmeleon_table.py -D demo_data demo_data/demo_samples.list > demo_data/demo_counts.table
-
-Options:
-  -h, --help            show this help message and exit
-  -D DIR_PARAM, --DIR=DIR_PARAM
-                        The directory where the files with counts for the
-                        samples are located.Note that this is unnecessary if
-                        the directory has been included in every path within
-                        the SAMPLES_COUNTS_FILES(default: ./)
-```
-
-An example of a SAMPLES_COUNTS_FILE can be found at [demo_data/demo_samples.list](demo_data/demo_samples.list)
-It generates a file with a header and n+1 columns, where n = number of samples.:
-
-```
-@Target Position	sample1	sample2	...	sampleN
-11865   1	1	...	1
-11866   1	2	...	1
-11867   1	2	...	1
-11868   3	2	...	1
-11869   3	1	...	0
-11870   3	1	...	0
-```
-
-* @ is a symbol used to differentiate the header from the other rows
-* Target: the chromosome or contig of the current position.
-* Position: the current position within the target.
-* sample1...sampleN: the kmers_count (number of different kmers found) in the current position for each sample
-
-## 4th) Translate the position-based kmer counts to intervals of constant kmer count
+## Translate the position-based kmer counts to intervals of constant kmer count
 
 This is done by running the script **kmeleon_intervals.py** and the next parameters:
 
@@ -302,7 +264,64 @@ chr1    12864   13364   1.4
 
 ```
 
-## 5th) Obtain a matrix of pairwise distances or similarities based on intersection of intervals between samples
+## Join the kmer counts of all samples in a single table
+
+This is done by running the script **kmeleon_table.py**, which has the next parameters:
+
+```
+Usage: kmeleon_table.py [OPTIONS] SAMPLES_FILE
+
+The SAMPLES_FILE has a row for each sample, with tab-separated columns: 1st column is the sample name, 2nd column is the path to the counts or intervals file, which has the format of the output of "kmeleon_count.py" or "kmeleon_intervals -m windows", respectively.
+Note that this software outputs to stderr and stdout.
+
+typical command: kmeleon_table.py -D demo_data demo_data/demo_counts.list > demo_data/demo_counts.table
+typical command: kmeleon_table.py -w -D demo_data demo_data/demo_windows.list > demo_data/demo_windows.table
+
+Options:
+  -h, --help            show this help message and exit
+  -D DIR_PARAM, --DIR=DIR_PARAM
+                        The directory where the files with counts or intervals
+                        are located. Note that this is unnecessary if the
+                        directory has been included in every path within the
+                        SAMPLES_FILE (default: ./)
+  -w                    If this flag is set, the input data should be
+                        intervals of fixed length and positions for all
+                        samples. i.e. as those produced by
+                        "kmeleon_intervals.py -m windows". If -w is not set,
+                        the input data expected will be kmer counts as those
+                        produced with "kmeleon_count.py".
+```
+
+An example of a SAMPLES_FILE can be found at [demo_data/demo_counts.list](demo_data/demo_counts.list) for counts data
+or at [demo_data/demo_counts.list](demo_data/demo_counts.list) for intervals data.
+
+An example of the output when joining counts data:
+
+```
+@Target Position	sample1	sample2	...	sampleN
+chr1    11865   1	1	...	1
+chr1    11866   1	2	...	1
+chr1    11867   1	2	...	1
+chr1    11868   3	2	...	1
+chr1    11869   3	1	...	0
+chr1    11870   3	1	...	0
+```
+
+* @ is a symbol used to differentiate the header from the other rows
+* Target: the chromosome or contig of the current position.
+* Position: the current position within the target.
+* sample1...sampleN: the kmers_count (number of different kmers found) in the current position for each sample
+
+An example of the output when joining intervals data:
+
+```
+@Target Start   END	sample1	sample2	...	sampleN
+chr1    11500   12000	1.6	...	1.0
+chr1    12000   12500   1.0	2.4	...	1.0
+chr1    12500   13000   1.0	2.6	...	1.1
+```
+
+## Obtain a matrix of pairwise distances or similarities based on intersection of intervals between samples
 
 This is done by running the script kmeleon_intersection_matrix.sh and the next parameters:
 

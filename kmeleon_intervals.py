@@ -16,9 +16,9 @@ import src.intervals.IntervalsParserWindows
 
 ################ GLOBALS AND PARAMETERS
 
-COUNTS_FILE_FIELD_TARGET = 0
-COUNTS_FILE_FIELD_POSITION = 1
-COUNTS_FILE_FIELD_COUNT = 2
+#COUNTS_FILE_FIELD_TARGET = 0
+#COUNTS_FILE_FIELD_POSITION = 1
+#COUNTS_FILE_FIELD_COUNT = 2
 
 # MODES
 # These are the different modes to compute the intervals
