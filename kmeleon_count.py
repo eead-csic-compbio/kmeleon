@@ -26,8 +26,9 @@ __usage = "usage: kmeleon_count.py [OPTIONS] KMERS_FILE\n"+\
 optParser = OptionParser(__usage)
 
 optParser.add_option('-d', '--depth', action='store', dest='depth_param', type='int', \
-                    help='The minimum times a k-mer is found to be reported in the output.'+\
-                    '(default: '+str(DEFAULT_DEPTH_PARAM)+')')
+                    help='The minimum times a k-mer is found to be reported in the output and counted. '+\
+                    '(default: '+str(DEFAULT_DEPTH_PARAM)+'). '+\
+                    ' This is indeed the same parameter as in kmeleon_extract.py.')
 
 ########### Read parameters
 ###########
