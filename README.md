@@ -147,46 +147,162 @@ It generates a file with a header and n+1 columns, where n = number of samples.:
 
 ## 4th) Translate the position-based kmer counts to intervals of constant kmer count
 
-This is done by running the script kmeleon_intervals.sh and the next parameters:
-
-`kmeleon_intervals.sh sample target counts_DIR minspan kmercount binary`
-
-- sample: the sample to process.
-- target: for example the chromosome name or number.
-- counts_DIR: a path to the directory  where the files with counts (from kmeleon count) can be found. Note that the files in this folder must be in '.gz' format, \
-and will have the next filename format:
-`counts_DIR/sample_name.target.counts.out.gz`
-- minspan: minimum length (consecutive genome nucleotides) of the resulting interval to be reported as such. E.g. 50
-- kmercount: whether report all intervals (all), only those with kmercount=1 (uniq), or those with kmercount>1 (multiple)
-- binary: whether the raw count value is used to compute intervals (no), or just differentiating kmercount=1 of kmercount>1 (yes)
-
-For example:
-
-`kmeleon_intervals.sh sample_name chr1H_part1 counts 50 multiple yes`
-
-will report all the intervals (kmercount=all), joining all positions with kmercount>1 in intervals (binary=yes), and at least a length of 50 nts (minspan=50)
-
-it generates a file in BED-like format without header and with 4 columns:
+This is done by running the script **kmeleon_intervals.py** and the next parameters:
 
 ```
-chr1H_part1	41868	41871	0
-chr1H_part1	41911	41925	0
-chr1H_part1	41977	41982	0
-chr1H_part1	41985	42023	0
-chr1H_part1	42054	42056	0
-chr1H_part1	42169	42231	0
-chr1H_part1	42274	42348	0
-chr1H_part1	42349	42375	1
-chr1H_part1	42376	42390	0
-chr1H_part1	42391	42420	1
+Usage: kmeleon_intervals.py [OPTIONS] COUNTS_FILE
+The COUNTS file has the format of the output of kmeleon_count.py
+Note that this software outputs to stderr and stdout.
+
+typical command:
+kmeleon_intervals.py -m binary -s 50 demo_data/demo.2_19.counts > demo_data/demo.2_19.intervals
+
+Options:
+  -h, --help            show this help message and exit
+  -m MODE_PARAM, --mode=MODE_PARAM
+                        How intervals are computed. Either "windows", "raw",
+                        "binary" or "smooth". (default: binary). These modes
+                        are explained in the README file.
+  -s SPAN_PARAM, --span=SPAN_PARAM
+                        The minimum span of bases to be considered a whole
+                        interval. Not used with option -w. (default: 50)
+  -w WINDOW_PARAM, --window=WINDOW_PARAM
+                        Requires -m windows. The size of the window for which
+                        median k-mer counts will be processed. (default: 50)
 ```
 
-* 1st column is the target name@ is a symbol used to differentiate the header from the other rows
-* 2nd column is the starting position of the interval. Note that this field is 0-based, as it follows the BED format
+kmeleon_intervals generates a file in BED-like format without header and with 4 columns:
+
+```
+chr1	41868	41871	1
+chr1	41911	41925	1
+chr1	41977	41982	1
+chr1	41985	42023	1
+chr1	42054	42056	1
+chr1	42169	42231	1
+chr1	42274	42348	1
+chr1	42349	42375	2
+chr1	42376	42390	1
+chr1	42391	42420	2
+```
+
+* 1st column is the target name
+* 2nd column is the starting position of the interval. Note that this field is 0-based, as in BED format
 * 3rd column is the ending position of the interval
-* 4th column shows whether kmercount=1 (0) or kmercount>1 (1)
+* 4th column shows the kmer count, depending on the mode used to compute the intervals (see below).
 
-NOTE that the values of the 4th column would show the actual kmercount with the option binary=no
+**What do the different modes do?**
+
+kmeleon_intervals.py reads a file with kmer counts to create intervals of constant or homogeneous kmer count.
+In **"raw" mode** (-m raw) the intervals and their associated values correspond directly to the kmer counts found.
+
+For example, the kmer counts in:
+
+```
+@Target Position    kc	dp
+chr1    11865	1	14
+chr1    11866	1	14
+chr1    11867	2	17
+chr1    11868	2	21
+chr1    11869	1	20
+chr1    11870	1	16
+chr1    11880	3	20
+chr1    11881	3	16
+```
+
+would translate into:
+
+```
+chr1	11864	11866	1
+chr1	11866	11868	2
+chr1	11868	11870	1
+chr1	11880	11881	3
+
+```
+
+In **"binary" mode** (-m binary) the values of the intervals reflect whether there is kmer count > 1 ("1") or not ("0").
+Therefore, sucessive bases with kmer count > 1 will be considered of the same interval even if their kmer counts are different.
+Thus, "binary" mode will generate longer intervals than "raw" mode, in general.
+For example, the previous kmer counts would be:
+
+```
+chr1	11864	11866	0
+chr1	11866	11868	1
+chr1	11868	11870	0
+chr1	11880	11881	1
+
+```
+
+Note that, for both "raw" and "binary" modes, the --span (-s) param will set the minimum length
+of any interval to be reported in the output. No filtering will be applied when it is set to 0 (-s 0).
+
+In **"smooth" mode** (-m smooth) the intervals are usually handled as in "raw" mode.
+However, when an interval is shorter than the --span parameter it is not filtered out directly.
+Instead, the value of the interval is adjusted according to adjacent intervals:
+* If the adjacent intervals are of smaller k-mer count
+the interval count will be changed to that smaller k-mer count.
+* If the adjacent intervals are of greater k-mer count
+the interval count will be changed to that greater k-mer count.
+
+Note that first of carrying over the smoothing, the intervals
+are sorted, so that those intervals with greater k-mer count are
+processed first.
+
+For example, with --span 50, the kmer counts in:
+
+```
+@Target Position    kc	dp
+chr1    11865	1	14
+chr1    11866	1	14
+chr1    11867	2	17
+...
+chr1    11887	2	21
+chr1    11888	1	20
+...
+chr1    11988	1	16
+chr1    11989	3	20
+...
+chr1    12989	3	16
+```
+
+would translate into:
+
+```
+chr1	11864	11988	1
+chr1	11988	12989	3
+
+```
+
+In **"windows" mode** (-m windows) each reported interval corresponds to a sliding window of fixed length.
+In "windows" mode the --span parameter is ignored. Instead, the --window (-w) parameter can be used to determine
+the size of sliding windows to use. The value returned for each window is the mean of kmer counts for all the
+bases within that window.
+
+For example, with --window 500, the kmer counts in:
+
+```
+@Target Position    kc	dp
+chr1    11865	1	14
+chr1    11866	1	14
+chr1    11867	2	17
+...
+chr1    11887	2	21
+chr1    11888	1	20
+...
+chr1    11988	1	16
+chr1    11989	3	20
+...
+chr1    12989	3	16
+```
+
+would translate into:
+
+```
+chr1	11864	12364	1.7
+chr1	12364	12864	3
+chr1    12864   13364   1.4
+
+```
 
 ## 5th) Obtain a matrix of pairwise distances or similarities based on intersection of intervals between samples
 

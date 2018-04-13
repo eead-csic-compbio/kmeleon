@@ -31,7 +31,7 @@ MODE_WINDOWS = "windows"
 
 DEFAULT_MODE = MODE_BINARY
 DEFAULT_SPAN = 50
-DEFAULT_WINDOW = 50
+DEFAULT_WINDOW = 500
 
 ## Usage
 __usage = "usage: kmeleon_intervals.py [OPTIONS] COUNTS_FILE\n"+\
@@ -43,16 +43,16 @@ optParser = OptionParser(__usage)
 optParser.add_option('-m', '--mode', action='store', dest='mode_param', type='string', \
                     help='How intervals are computed. Either "'+MODE_WINDOWS+'", "'+MODE_CONSTANT+\
                     '", "'+MODE_BINARY+'" or "'+MODE_SMOOTH+'". '+\
-                    '(default: '+str(DEFAULT_MODE)+')')
-
-optParser.add_option('-w', '--window', action='store', dest='window_param', type='int', \
-                    help='Requires -m windows. The size of the window for which median k-mer counts will be processed. '+\
-                    '(default: '+str(DEFAULT_WINDOW)+')')
+                    '(default: '+str(DEFAULT_MODE)+'). These modes are explained in the README file.')
 
 optParser.add_option('-s', '--span', action='store', dest='span_param', type='int', \
                     help='The minimum span of bases to be considered a whole interval. '+\
                     'Not used with option -w. '+\
                     '(default: '+str(DEFAULT_SPAN)+')')
+
+optParser.add_option('-w', '--window', action='store', dest='window_param', type='int', \
+                    help='Requires -m windows. The size of the window for which mean k-mer counts will be processed. '+\
+                    '(default: '+str(DEFAULT_WINDOW)+')')
 
 ########### Read parameters
 ###########
