@@ -312,15 +312,17 @@ __usage = "usage: kmeleon_extract.py [OPTIONS] -b BAM_FILE|-s SAM_FILE\n"+\
 optParser = OptionParser(__usage)
 
 optParser.add_option('-t', '--target', action='store', dest='target_param', type='string', \
-                    help='A chromosome number or name, or a specific contig, or "all" to process all the mappings.'+\
-                    '(default: "all".')
+                    help='A chromosome number or name, or a specific contig, or "all" to process all the mappings. '+\
+                    '(default: "all".)')
 
 optParser.add_option('--start', action='store', dest='start_param', type='int', \
-                    help='The -t target parameter is required. Starting basepairs position to process within the given target.'+\
+                    help='The -t target parameter is required. Starting basepairs '+\
+                    'position to process within the given target. '+\
                     '(default: '+str(DEFAULT_START_PARAM)+')')
 
 optParser.add_option('--end', action='store', dest='end_param', type='int', \
-                    help='The -t target parameter is required. Ending basepairs position to process within the given target.'+\
+                    help='The -t target parameter is required. '+\
+                    'Ending basepairs position to process within the given target. '+\
                     '(default: '+str(DEFAULT_END_PARAM)+')')
 
 optParser.add_option('-k', '--kmer', action='store', dest='kmer_param', type='int', \
@@ -328,7 +330,7 @@ optParser.add_option('-k', '--kmer', action='store', dest='kmer_param', type='in
                     '(default: '+str(DEFAULT_KMER_PARAM)+')')
 
 optParser.add_option('-d', '--depth', action='store', dest='depth_param', type='int', \
-                    help='The minimum times a k-mer is found to be reported in the output.'+\
+                    help='The minimum times a k-mer is found to be reported in the output. '+\
                     '(default: '+str(DEFAULT_DEPTH_PARAM)+')')
 
 optParser.add_option('-b', '--bam', action='store', dest='bam_param', type='string', \

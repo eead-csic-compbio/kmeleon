@@ -32,19 +32,19 @@ Options:
   -h, --help            show this help message and exit
   -t TARGET_PARAM, --target=TARGET_PARAM
                         A chromosome number or name, or a specific contig, or
-                        "all" to process all the mappings.(default: "all".
+                        "all" to process all the mappings. (default: "all".)
   --start=START_PARAM   The -t target parameter is required. Starting
-                        basepairs position to process within the given
-                        target.(default: -1)
+                        basepairs position to process within the given target.
+                        (default: -1)
   --end=END_PARAM       The -t target parameter is required. Ending basepairs
-                        position to process within the given target.(default:
+                        position to process within the given target. (default:
                         -1)
   -k KMER_PARAM, --kmer=KMER_PARAM
                         The length of fragments (k-mers) to parse. (default:
                         50)
   -d DEPTH_PARAM, --depth=DEPTH_PARAM
                         The minimum times a k-mer is found to be reported in
-                        the output.(default: 0)
+                        the output. (default: 0)
   -b BAM_PARAM, --bam=BAM_PARAM
                         A BAM file to process. Either the -b or the -s option
                         is required.
