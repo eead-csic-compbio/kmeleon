@@ -128,12 +128,14 @@ Options:
   -s SPAN_PARAM, --span=SPAN_PARAM
                         The minimum span of bases to be considered a whole
                         interval. Not used with option -w. (default: 50)
+  --min-kc=MIN_KC_PARAM
+                        Minimum kmer_count in a interval to be reported. Set
+                        to 0 to report all the intervals. (default: 0)
   -d, --diploid         Requires -m binary. When -d is set, positions with
                         kmer_count=2 will be treated as regular heterozygous
                         variants and the interval value  will be set to 0 as
                         with kmer_count==1. If -d is not set, intervals with
-                        kmer_count==2 will be set to 1, as with
-                        kmer_count>2.(default: 50)
+                        kmer_count==2 will be set to 1, as with kmer_count>2.
   -w WINDOW_PARAM, --window=WINDOW_PARAM
                         Requires -m windows. The size of the window for which
                         mean k-mer counts will be processed. (default: 500)
