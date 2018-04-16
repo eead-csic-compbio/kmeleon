@@ -77,7 +77,7 @@ def f_add_to_interval(interval, pos):
 # k-mer count > 1 is an average of the counts found for all the basepairs
 # in the interval, instead of a direct translation of the k-mer count of
 # every position.
-def f_intervals(counts_fileobj, span_param, diploid_param):
+def f_intervals(counts_fileobj, span_param, min_kc_param, diploid_param):
     
     prev_data = None
     prev_target = ""
@@ -105,7 +105,9 @@ def f_intervals(counts_fileobj, span_param, diploid_param):
         if is_new_interval:
             if curr_interval:
                 prev_interval = f_add_to_interval(curr_interval, prev_pos)
-                if f_get_interval_length(prev_interval) >= span_param:
+                if (f_get_interval_length(prev_interval) >= span_param) and\
+                    (f_get_interval_count(prev_interval) >= min_kc_param):
+                    
                     f_print_interval(prev_interval)
                 
             curr_interval = f_new_interval(curr_target, curr_pos, curr_count, diploid_param)
@@ -120,7 +122,9 @@ def f_intervals(counts_fileobj, span_param, diploid_param):
     # Last interval
     if curr_interval:
         prev_interval = f_add_to_interval(curr_interval, prev_pos)
-        if f_get_interval_length(prev_interval) >= span_param:
+        if (f_get_interval_length(prev_interval) >= span_param) and\
+            (f_get_interval_count(prev_interval) >= min_kc_param):
+            
             f_print_interval(prev_interval)
     
     return

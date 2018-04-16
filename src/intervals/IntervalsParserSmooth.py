@@ -91,7 +91,7 @@ def f_smooth_next_interval(interval, next_interval):
     
     return interval
 
-def f_smooth_intervals(intervals_list, span_param):
+def f_smooth_intervals(intervals_list, span_param, min_kc_param):
     
     did_change = True
     loops = 0
@@ -238,7 +238,8 @@ def f_intervals(counts_fileobj, span_param):
     
     sorted_list = sorted(intervals_list, key=lambda x:x["start"])
     for interval in sorted_list:
-        f_print_interval(interval)
+        if (f_get_interval_count(prev_interval) >= min_kc_param):
+            f_print_interval(interval)
     
     return
 

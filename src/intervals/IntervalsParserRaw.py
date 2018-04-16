@@ -41,7 +41,7 @@ def f_add_to_interval(interval, target, pos, count):
 # either due to a basepair span or a change in kmer count,
 # is printed. Therefore, if span_param==0 the raw intervals
 # representing the kmers are printed.
-def f_intervals(counts_fileobj, span_param):
+def f_intervals(counts_fileobj, span_param, min_kc_param):
     
     prev_data = None
     prev_target = ""
@@ -67,7 +67,9 @@ def f_intervals(counts_fileobj, span_param):
         if is_new_interval:
             if curr_interval:
                 prev_interval = f_add_to_interval(curr_interval, prev_target, prev_pos, prev_count)
-                if f_get_interval_length(prev_interval) >= span_param:
+                if (f_get_interval_length(prev_interval) >= span_param) and\
+                    (f_get_interval_count(prev_interval) >= min_kc_param):
+                    
                     f_print_interval(prev_interval)
                 
             curr_interval = f_new_interval(curr_target, curr_pos, curr_count)
@@ -80,7 +82,9 @@ def f_intervals(counts_fileobj, span_param):
     # Last interval
     if curr_interval:
         prev_interval = f_add_to_interval(curr_interval, prev_target, prev_pos, prev_count)
-        if f_get_interval_length(prev_interval) >= span_param:
+        if (f_get_interval_length(prev_interval) >= span_param) and\
+            (f_get_interval_count(prev_interval) >= min_kc_param):
+            
             f_print_interval(prev_interval)
     
     return

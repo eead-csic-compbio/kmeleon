@@ -142,7 +142,7 @@ def f_windows(counts_fileobj, window_param):
     return intervals_list
 
 # This is the main function of MODE_WINDOWS
-def f_intervals(counts_fileobj, window_param):
+def f_intervals(counts_fileobj, window_param, min_kc_param):
     
     # Calculate median k-mer count over moving windows
     
@@ -152,7 +152,8 @@ def f_intervals(counts_fileobj, window_param):
     
     sorted_list = sorted(intervals_list, key=lambda x:x["start"])
     for interval in sorted_list:
-        f_print_interval(interval)
+        if (f_get_interval_count(prev_interval) >= min_kc_param):
+            f_print_interval(interval)
     
     return
 
