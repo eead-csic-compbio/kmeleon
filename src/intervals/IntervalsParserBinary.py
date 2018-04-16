@@ -34,22 +34,34 @@ def f_is_new_interval(curr_target, curr_pos, curr_count,
     
     return is_new_interval
 
-def f_new_interval(target, start, count):
+def f_new_interval(target, start, count, diploid_param):
     new_interval = {}
     
     new_interval["target"] = target
     new_interval["start"] = start-1
     new_interval["end"] = start
-    new_interval["count"] = count
-    new_interval["counts"] = [count]
+    
+    if diploid_param:
+        if count <= 2:
+            new_interval["count"] = 0
+            new_interval["counts"] = [0]
+        else: # count > 2
+            new_interval["count"] = 1
+            new_interval["counts"] = [1]
+    else:
+        if count == 1:
+            new_interval["count"] = 0
+            new_interval["counts"] = [0]
+        else: # count > 1
+            new_interval["count"] = 1
+            new_interval["counts"] = [1]
     
     return new_interval
 
-def f_add_to_interval(interval, target, pos, count):
+def f_add_to_interval(interval, pos):
     
     interval["end"] = pos
-    interval["counts"].append(count)
-    interval["count"] = sum(interval["counts"])*1.0/len(interval["counts"])
+    interval["counts"].append(interval["count"])
     
     return interval
     
@@ -92,13 +104,13 @@ def f_intervals(counts_fileobj, span_param, diploid_param):
         
         if is_new_interval:
             if curr_interval:
-                prev_interval = f_add_to_interval(curr_interval, prev_target, prev_pos, prev_count)
+                prev_interval = f_add_to_interval(curr_interval, prev_pos)
                 if f_get_interval_length(prev_interval) >= span_param:
                     f_print_interval(prev_interval)
                 
-            curr_interval = f_new_interval(curr_target, curr_pos, curr_count)
+            curr_interval = f_new_interval(curr_target, curr_pos, curr_count, diploid_param)
         else:
-            curr_interval = f_add_to_interval(curr_interval, prev_target, prev_pos, prev_count)
+            curr_interval = f_add_to_interval(curr_interval, prev_pos)
         
         prev_target = curr_target
         prev_pos = curr_pos
@@ -107,7 +119,7 @@ def f_intervals(counts_fileobj, span_param, diploid_param):
     
     # Last interval
     if curr_interval:
-        prev_interval = f_add_to_interval(curr_interval, prev_target, prev_pos, prev_count)
+        prev_interval = f_add_to_interval(curr_interval, prev_pos)
         if f_get_interval_length(prev_interval) >= span_param:
             f_print_interval(prev_interval)
     
