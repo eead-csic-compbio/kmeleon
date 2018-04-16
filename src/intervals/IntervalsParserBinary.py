@@ -7,17 +7,28 @@ import sys
 from util import *
 from ..counts.Count import *
 
-def f_is_new_interval(curr_target, curr_pos, curr_count, prev_target, prev_pos, prev_count):
+def f_is_new_interval(curr_target, curr_pos, curr_count,
+                      prev_target, prev_pos, prev_count,
+                      diploid_param):
+    
     is_new_interval = False
     
     if curr_target == prev_target and curr_pos == prev_pos + 1:
         
-        if curr_count == 1 and prev_count == 1:
-            is_new_interval = False
-        elif curr_count > 1 and prev_count > 1:
-            is_new_interval = False
-        else: # curr_count == 1 and prev_count > 1 OR curr_count > 1 and prev_count == 1
-            is_new_interval = True
+        if diploid_param:
+            if curr_count <= 2 and prev_count <= 2:
+                is_new_interval = False
+            elif curr_count > 2 and prev_count > 2:
+                is_new_interval = False
+            else: # curr_count <= 2 and prev_count > 2 OR curr_count > 2 and prev_count <= 2
+                is_new_interval = True
+        else:
+            if curr_count == 1 and prev_count == 1:
+                is_new_interval = False
+            elif curr_count > 1 and prev_count > 1:
+                is_new_interval = False
+            else: # curr_count == 1 and prev_count > 1 OR curr_count > 1 and prev_count == 1
+                is_new_interval = True
     else:
         is_new_interval = True
     
@@ -45,6 +56,8 @@ def f_add_to_interval(interval, target, pos, count):
 # This is the main function of the MODE_BINARY
 # This is like the constant mode, but here only intervals
 # with k-mer count == 1 or k-mer count > 1 are differentiated to each other.
+# Note that if diploid_param==True, the intervals are considered different
+# if k-mer count <=2 for one interval and k-mer count >2 for the other.
 # Therefore, it changes the identification of a new interval, specially for
 # those basepairs with k-mer count > 1, since it is considered the same
 # whether is k-mer count == 2 or ==3, for example, and longer intervals will
@@ -52,7 +65,7 @@ def f_add_to_interval(interval, target, pos, count):
 # k-mer count > 1 is an average of the counts found for all the basepairs
 # in the interval, instead of a direct translation of the k-mer count of
 # every position.
-def f_intervals(counts_fileobj, span_param):
+def f_intervals(counts_fileobj, span_param, diploid_param):
     
     prev_data = None
     prev_target = ""
@@ -71,7 +84,9 @@ def f_intervals(counts_fileobj, span_param):
         #print prev_data
         #print line_data
         
-        is_new_interval = f_is_new_interval(curr_target, curr_pos, curr_count, prev_target, prev_pos, prev_count)
+        is_new_interval = f_is_new_interval(curr_target, curr_pos, curr_count,
+                                            prev_target, prev_pos, prev_count,
+                                            diploid_param)
         
         #print is_new_interval
         

@@ -86,6 +86,12 @@ if options.span_param != None:
 else:
     span_param = DEFAULT_SPAN
     
+## how to manage heterozygous variants in binary mode
+if options.diploid_param:
+    diploid_param = True
+else:
+    diploid_param = False
+
 ## window mode
 if options.window_param != None:
     window_param = options.window_param
@@ -106,7 +112,7 @@ else:
 if mode_param == MODE_CONSTANT:
     src.intervals.IntervalsParserRaw.f_intervals(counts_fileobj, span_param)
 elif mode_param == MODE_BINARY:
-    src.intervals.IntervalsParserBinary.f_intervals(counts_fileobj, span_param)
+    src.intervals.IntervalsParserBinary.f_intervals(counts_fileobj, span_param, diploid_param)
 elif mode_param == MODE_SMOOTH:
     src.intervals.IntervalsParserSmooth.f_intervals(counts_fileobj, span_param)
 elif mode_param == MODE_WINDOWS:
