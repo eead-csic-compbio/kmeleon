@@ -128,9 +128,15 @@ Options:
   -s SPAN_PARAM, --span=SPAN_PARAM
                         The minimum span of bases to be considered a whole
                         interval. Not used with option -w. (default: 50)
+  -d, --diploid         Requires -m binary. When -d is set, positions with
+                        kmer_count=2 will be treated as regular heterozygous
+                        variants and the interval value  will be set to 0 as
+                        with kmer_count==1. If -d is not set, intervals with
+                        kmer_count==2 will be set to 1, as with
+                        kmer_count>2.(default: 50)
   -w WINDOW_PARAM, --window=WINDOW_PARAM
                         Requires -m windows. The size of the window for which
-                        median k-mer counts will be processed. (default: 50)
+                        mean k-mer counts will be processed. (default: 500)
 ```
 kmeleon_intervals.py reads a file with kmer counts to create intervals of constant or homogeneous kmer count.
 It generates a file in BED-like format without header and with 4 columns:
@@ -183,6 +189,9 @@ chr1	11880	11881	3
 
 In **"binary" mode** (-m binary) the values of the intervals reflect whether there is kmer count > 1 ("1") or not ("0").
 Therefore, sucessive bases with kmer count > 1 will be considered of the same interval even if their kmer counts are different.
+Note that if the -d (--diploid) parameter is set, the values of the intervals will be "1" for kmer_count > 2 and
+"0" for kmer_count==1 or kmer_count==2. The -d option should be set when we expect regular heterozygous variants in our data,
+and it should not be set when we do not expect heterozygous variants (haploid species, pure lines, etc).
 Thus, "binary" mode will generate longer intervals than "raw" mode, in general.
 For example, the previous kmer counts would be:
 

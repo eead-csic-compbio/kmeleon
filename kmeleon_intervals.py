@@ -50,6 +50,13 @@ optParser.add_option('-s', '--span', action='store', dest='span_param', type='in
                     'Not used with option -w. '+\
                     '(default: '+str(DEFAULT_SPAN)+')')
 
+optParser.add_option('-d', '--diploid', action='store_true', dest='diploid_param', \
+                    help='Requires -m binary. When -d is set, positions with kmer_count=2 '+\
+                    'will be treated as regular heterozygous variants and the interval value '+\
+                    ' will be set to 0 as with kmer_count==1. If -d is not set, intervals with kmer_count==2 will be '+\
+                    'set to 1, as with kmer_count>2.'+\
+                    '(default: '+str(DEFAULT_SPAN)+')')
+
 optParser.add_option('-w', '--window', action='store', dest='window_param', type='int', \
                     help='Requires -m windows. The size of the window for which mean k-mer counts will be processed. '+\
                     '(default: '+str(DEFAULT_WINDOW)+')')
