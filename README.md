@@ -312,7 +312,7 @@ chr1    11870   3	1	...	0
 * Position: the current position within the target.
 * sample1...sampleN: the kmers_count (number of different kmers found) in the current position for each sample
 
-An example of the output when joining intervals data:
+An example of the output when joining intervals (-w option) data:
 
 ```
 @Target Start   END	sample1	sample2	...	sampleN
