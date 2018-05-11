@@ -125,6 +125,8 @@ for i, line in enumerate(kmers_fileobj):
     if start_param != DEFAULT_START_PARAM and pos < start_param: continue
     if end_param != DEFAULT_END_PARAM and pos > end_param: continue
     
+    if (pos % 100000 == 0): sys.stderr.write("\trunning position "+str(pos)+"\n")
+        
     md_z = line_data[KMERS_FILE_FIELD_KMER]
     
     if target in refs_dict:
@@ -146,6 +148,8 @@ for i, line in enumerate(kmers_fileobj):
         pos_list.append(pos)
 
 kmers_fileobj.close()
+
+sys.stderr.write("Writing kmer counts to output...\n")
 
 sys.stdout.write("@Target\tPosition\tkc\tdp\n")
 for target in refs_list:
