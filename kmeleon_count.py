@@ -17,6 +17,9 @@ KMERS_FILE_FIELD_KMER = 2
 KMERS_FILE_FIELD_DEPTH = 3
 
 DEFAULT_DEPTH_PARAM = 0
+DEFAULT_TARGET_PARAM = "all"
+DEFAULT_START_PARAM = -1
+DEFAULT_END_PARAM = -1
 
 ## Usage
 __usage = "usage: kmeleon_count.py [OPTIONS] KMERS_FILE\n"+\
@@ -29,6 +32,20 @@ optParser.add_option('-d', '--depth', action='store', dest='depth_param', type='
                     help='The minimum times a k-mer is found to be reported in the output and counted. '+\
                     '(default: '+str(DEFAULT_DEPTH_PARAM)+'). '+\
                     ' This is indeed the same parameter as in kmeleon_extract.py.')
+
+optParser.add_option('-t', '--target', action='store', dest='target_param', type='string', \
+                    help='A chromosome number or name, or a specific contig, or "all" to process all the mappings. '+\
+                    '(default: "all".)')
+
+optParser.add_option('--start', action='store', dest='start_param', type='int', \
+                    help='The -t target parameter is required. Starting basepairs '+\
+                    'position to process within the given target. '+\
+                    '(default: '+str(DEFAULT_START_PARAM)+')')
+
+optParser.add_option('--end', action='store', dest='end_param', type='int', \
+                    help='The -t target parameter is required. '+\
+                    'Ending basepairs position to process within the given target. '+\
+                    '(default: '+str(DEFAULT_END_PARAM)+')')
 
 ########### Read parameters
 ###########
@@ -48,6 +65,30 @@ if options.depth_param:
     depth_param = options.depth_param
 else:
     depth_param = DEFAULT_DEPTH_PARAM
+
+## Target
+if options.target_param:
+    target_param = options.target_param
+else:
+    target_param = DEFAULT_TARGET_PARAM
+
+## Start
+if options.start_param:
+    if target_param == DEFAULT_TARGET_PARAM:
+        optParser.exit(0, "The --start and --end options require a specific --target (-t) option.\n")
+    else:
+        start_param = options.start_param
+else:
+    start_param = DEFAULT_START_PARAM
+
+## End
+if options.end_param:
+    if target_param == DEFAULT_TARGET_PARAM:
+        optParser.exit(0, "The --start and --end options require a specific --target (-t) option.\n")
+    else:
+        end_param = options.end_param
+else:
+    end_param = DEFAULT_END_PARAM
 
 #########################
 ######################### BEGIN
@@ -76,7 +117,14 @@ for i, line in enumerate(kmers_fileobj):
     if md_z_count < depth_param: continue
     
     target = line_data[KMERS_FILE_FIELD_TARGET]
+    
+    if target_param != DEFAULT_TARGET_PARAM and target != target_param: continue
+    
     pos = int(line_data[KMERS_FILE_FIELD_POSITION])
+    
+    if start_param != DEFAULT_START_PARAM and pos < start_param: continue
+    if end_param != DEFAULT_END_PARAM and pos > end_param: continue
+    
     md_z = line_data[KMERS_FILE_FIELD_KMER]
     
     if target in refs_dict:

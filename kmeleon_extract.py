@@ -167,7 +167,7 @@ def f_get_kmer_contig_position(internal_pos, read_map_pos, read_clipping):
 # Adds a kmer to an absolute position,
 # and counts how many times such kmer has been
 # added to such position (depth of kmer at that position)
-def f_add_kmer_depths(kmer_ref_id, kmer_ref_name, kmer_position, md_z):
+def f_add_kmer_depths(refs_dict, refs_list, kmer_ref_id, kmer_ref_name, kmer_position, md_z):
     
     #sys.stdout.write(str(kmer_position)+" - "+str(md_z)+"\n")
     
@@ -235,24 +235,29 @@ def f_print_pos_kmers(kmer_ref_name, kmer_position, pos_kmers_dict, min_depth):
     return
 
 ##
-def f_print_previous_kmers(curr_ref_id, curr_pos, min_depth, flush_interval):
+def f_print_previous_kmers(refs_dict, refs_list, curr_ref_id, curr_pos, min_depth, flush_interval):
     new_refs_list = []
     new_refs_dict = {}
     
     ################ Generate output
     # Rows
     for read_ref_id in refs_list:
+        
         pos_list = refs_dict[read_ref_id]["pos_list"]
         pos_dict = refs_dict[read_ref_id]["pos_dict"]
         read_ref_name = refs_dict[read_ref_id]["ref_name"]
         
+        # Obtain or create the info for this reference,
+        # which is common for all the kmers in such reference
         if read_ref_id in new_refs_dict:
             new_pos_list = new_refs_dict[read_ref_id]["pos_list"]
             new_pos_dict = new_refs_dict[read_ref_id]["pos_dict"]
         else:
             new_pos_list = []
             new_pos_dict = {}
-            new_refs_dict[read_ref_id] = {"pos_dict":new_pos_dict, "pos_list":new_pos_list, "ref_name":read_ref_name}
+            new_refs_dict[read_ref_id] = {"pos_dict":new_pos_dict,
+                                          "pos_list":new_pos_list,
+                                          "ref_name":read_ref_name}
             new_refs_list.append(read_ref_id)
         
         for kmer_position in pos_list:
@@ -265,11 +270,29 @@ def f_print_previous_kmers(curr_ref_id, curr_pos, min_depth, flush_interval):
                     
                 elif curr_pos - flush_interval > kmer_position:
                     f_print_pos_kmers(read_ref_name, kmer_position, pos_kmers_dict, min_depth)
+                    
                 else:
                     
+                    #if read_ref_id in new_refs_dict:
+                    #    new_pos_list = new_refs_dict[read_ref_id]["pos_list"]
+                    #    new_pos_dict = new_refs_dict[read_ref_id]["pos_dict"]
+                    #else:
+                    #    new_pos_list = []
+                    #    new_pos_dict = {}
+                    #    new_refs_dict[read_ref_id] = {"pos_dict":new_pos_dict,
+                    #                                  "pos_list":new_pos_list,
+                    #                                  "ref_name":read_ref_name}
+                    #    new_refs_list.append(read_ref_id)
+                    #    
                     # Obtain positions of the given reference_id
                     new_pos_list.append(kmer_position)
                     new_pos_dict[kmer_position] = pos_kmers_dict
+                    
+                    #if read_ref_id not in new_refs_dict:
+                    #    new_refs_dict[read_ref_id] = {"pos_dict":new_pos_dict,
+                    #                                  "pos_list":new_pos_list,
+                    #                                  "ref_name":read_ref_name}
+                    #    new_refs_list.append(read_ref_id)
                 
             else:
                 raise Exception("Position "+str(kmer_position)+" is not in dict")
@@ -499,7 +522,9 @@ for read in samfile_iter:
             kmer_contig_position = f_get_kmer_contig_position(i, ref_pos_start, read_left_clip)
             
             #if store_depths:
-            f_add_kmer_depths(read_ref_id, read_ref_name, kmer_contig_position, collapsed_md_z)
+            f_add_kmer_depths(refs_dict, refs_list,
+                              read_ref_id, read_ref_name,
+                              kmer_contig_position, collapsed_md_z)
             #else:
             #    f_add_kmer(kmer_contig_position, collapsed_md_z)
         
@@ -513,14 +538,22 @@ for read in samfile_iter:
             header_printed = True
         
         if ref_pos_start - FLUSH_INTERVAL*2 > first_to_flush_pos:
-            (refs_list, refs_dict) = f_print_previous_kmers(read_ref_id, ref_pos_start, depth_param, FLUSH_INTERVAL)
+            (refs_list, refs_dict) = f_print_previous_kmers(refs_dict, refs_list,
+                                                            read_ref_id, ref_pos_start,
+                                                            depth_param, FLUSH_INTERVAL)
             #print "POS RANGE"
             #print read
             #print pos_range
             #print read_pos_start
             #print read_pos_end
             #print window_side
-            first_to_flush_pos = refs_dict[refs_list[0]]["pos_list"][0]
+            #sys.stderr.write(str(len(refs_dict))+"\n")
+            #sys.stderr.write(str(len(refs_list))+"\n")
+            
+            if len(refs_list) > 0 and len(refs_dict[refs_list[0]]["pos_list"]) > 0:
+                first_to_flush_pos = refs_dict[refs_list[0]]["pos_list"][0]
+            else:
+                first_to_flush_pos = -1 # will be updated to ref_pos_start in the next iteration
     
     numreads_processed+=1
     if (numreads_processed % 1000 == 0):
