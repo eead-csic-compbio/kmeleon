@@ -312,7 +312,7 @@ def f_print_previous_kmers(refs_dict, refs_list, curr_ref_id, curr_pos, min_dept
 ################ GLOBALS AND PARAMETERS
 
 VERBOSE_ALL = 5
-verbosity = 0
+verbosity = 5
 
 FLUSH_INTERVAL = 10000
 
@@ -448,8 +448,6 @@ first_to_flush_pos = -1
 samfile_iter = get_samfile_iter(input_file, target_param, start_param, end_param)
 
 for read in samfile_iter:
-    
-    #print read
     
     if read.is_unmapped: continue
     

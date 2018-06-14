@@ -6,6 +6,23 @@
 import sys, gzip
 from optparse import OptionParser
 
+################ Functions
+
+def f_output_target(refs_dict, target, pos):
+    
+    if target in refs_dict:
+        pos_dict = refs_dict[target]["pos_dict"]
+        if pos in pos_dict:
+            pos_kmer_count = pos_dict[pos]["kc"]
+            pos_depth = pos_dict[pos]["dp"]
+            sys.stdout.write(str(target)+"\t"+str(pos)+"\t"+str(pos_kmer_count)+"\t"+str(pos_depth)+"\n")
+        else:
+            raise Exception("Position "+str(pos)+" for target "+str(target)+" not found to be output.")
+    else:
+        raise Exception("Target "+str(target)+" not found to be output.")
+    
+    return
+
 ################ MAIN
 ################
 
@@ -93,9 +110,10 @@ else:
 #########################
 ######################### BEGIN
 
-refs_dict = {}
-refs_list = []
+# output header
+sys.stdout.write("@Target\tPosition\tkc\tdp\n")
 
+# file with kmers
 ext_pos = kmers_file.rfind(".")
 ext = kmers_file[ext_pos+1:]
 
@@ -103,7 +121,14 @@ if ext == "gz" or ext == "gzip":
     kmers_fileobj = gzip.open(kmers_file, 'r')
 else:
     kmers_fileobj = open(kmers_file, 'r')
-    
+
+# iterate over rows
+refs_dict = {}
+#refs_list = []
+
+prev_target = ""
+prev_pos = -1
+
 for i, line in enumerate(kmers_fileobj):
     
     if i==0: continue #header
@@ -123,11 +148,19 @@ for i, line in enumerate(kmers_fileobj):
     pos = int(line_data[KMERS_FILE_FIELD_POSITION])
     
     if start_param != DEFAULT_START_PARAM and pos < start_param: continue
-    if end_param != DEFAULT_END_PARAM and pos > end_param: continue
+    if end_param != DEFAULT_END_PARAM and pos > end_param: break
     
     if (pos % 100000 == 0): sys.stderr.write("\trunning position "+str(pos)+"\n")
-        
+    
     md_z = line_data[KMERS_FILE_FIELD_KMER]
+    
+    if target != prev_target or pos != prev_pos:
+        if prev_target != "" and prev_pos != -1:
+            f_output_target(refs_dict, prev_target, prev_pos)
+            refs_dict = {}
+            #refs_list = []
+            prev_target = ""
+            prev_pos = -1
     
     if target in refs_dict:
         pos_dict = refs_dict[target]["pos_dict"]
@@ -136,7 +169,7 @@ for i, line in enumerate(kmers_fileobj):
         pos_dict = {}
         pos_list = []
         refs_dict[target] = {"pos_dict":pos_dict, "pos_list":pos_list}
-        refs_list.append(target)
+        #refs_list.append(target)
     
     if pos in pos_dict:
         #pos_kmer_count = pos_dict[pos]
@@ -146,23 +179,19 @@ for i, line in enumerate(kmers_fileobj):
     else:
         pos_dict[pos] = {"dp":md_z_count, "kc":1} #kc = k-mer count; dp = depth
         pos_list.append(pos)
+    
+    prev_target = target
+    prev_pos = pos
 
 kmers_fileobj.close()
 
-sys.stderr.write("Writing kmer counts to output...\n")
-
-sys.stdout.write("@Target\tPosition\tkc\tdp\n")
-for target in refs_list:
-    pos_list = refs_dict[target]["pos_list"]
-    pos_dict = refs_dict[target]["pos_dict"]
-    
-    for pos in sorted(pos_list):
-        if pos in pos_dict:
-            pos_kmer_count = pos_dict[pos]["kc"]
-            pos_depth = pos_dict[pos]["dp"]
-            sys.stdout.write(str(target)+"\t"+str(pos)+"\t"+str(pos_kmer_count)+"\t"+str(pos_depth)+"\n")
-        else:
-            raise Exception("Position "+str(pos)+" is not in dict")
+# output last position
+if prev_target != "" and prev_pos != -1:
+    f_output_target(refs_dict, prev_target, prev_pos)
+    refs_dict = {}
+    #refs_list = []
+    prev_target = ""
+    prev_pos = -1
 
 sys.stderr.write("Finished.\n")
 
