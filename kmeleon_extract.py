@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-## CPCantalapiedra 2017 from a code by
+## CPCantalapiedra 2018 from a code by
 # CPCantalapiedra 2015
 ######################################
 # This is a script which takes a BAM file as input
@@ -127,28 +127,6 @@ def f_collapse_md_z(md_z):
     
     return collapsed_md_z
 
-# A function which clips an MD:Z field (md_z parameter),
-# previously expanded with the f_expand_md_z function,
-# based on a central position (pos parameter)
-# and a half-window size (window_side parameter). E.g.:
-# md_z = [1, 1, 1, G, 1, 1, A]
-# pos = 3
-# window_side = 1
-# returns [1, 1, G]
-def f_clip_md_z(md_z, pos, window_side):
-    # NOTE: md_z is expected to be an expanded_md_z
-    clipped_md_z = []
-    
-    start_clip = pos - window_side - 1
-    end_clip = pos + window_side
-    
-    clipped_md_z = md_z[start_clip:end_clip]
-    
-    #sys.stdout.write("Clipped in "+str(pos)+", interval ["+str(start_clip)+", "+str(end_clip)+")\n")
-    #sys.stdout.write(str(clipped_md_z)+"\n")
-    
-    return clipped_md_z
-
 # A function which takes a read mapping position (read_map_position),
 # a relative position of a kmer within the read (internal_pos parameter)
 # and a left clipping based on soft clipping of the CIGAR (read_clipping parameter)
@@ -157,8 +135,8 @@ def f_get_kmer_contig_position(internal_pos, read_map_pos, read_clipping):
     kmer_pos = None
     
     # consider only left clipping (position 0 of the tuple)
-    #kmer_pos = read_map_pos + (internal_pos - 1) + read_clipping[0]
-    kmer_pos = read_map_pos + (internal_pos - 1) + read_clipping
+    kmer_pos = read_map_pos + (internal_pos - 1)
+    #kmer_pos = read_map_pos + (internal_pos - 1) + read_clipping
     
     #sys.stdout.write("\tkmer_pos: "+str(kmer_pos)+"\n")
     
@@ -167,7 +145,7 @@ def f_get_kmer_contig_position(internal_pos, read_map_pos, read_clipping):
 # Adds a kmer to an absolute position,
 # and counts how many times such kmer has been
 # added to such position (depth of kmer at that position)
-def f_add_kmer_depths(refs_dict, refs_list, kmer_ref_id, kmer_ref_name, kmer_position, md_z):
+def f_add_kmer_depths(refs_dict, refs_list, kmer_ref_id, kmer_ref_name, kmer_position, md_z, kmer_seq):
     
     #sys.stdout.write(str(kmer_position)+" - "+str(md_z)+"\n")
     
@@ -188,53 +166,99 @@ def f_add_kmer_depths(refs_dict, refs_list, kmer_ref_id, kmer_ref_name, kmer_pos
     if kmer_position in pos_dict:
         pos_kmers_dict = pos_dict[kmer_position]
         if md_z_string in pos_kmers_dict:
-            pos_kmers_dict[md_z_string] += 1
+            pos_kmers_dict[md_z_string]["count"] += 1
         else:
-            pos_kmers_dict[md_z_string] = 1
+            pos_kmers_dict[md_z_string] = {"count":1, "kmer_seq":kmer_seq}
         
     else:
         pos_kmers_dict = {}
-        pos_kmers_dict[md_z_string] = 1
+        pos_kmers_dict[md_z_string] = {"count":1, "kmer_seq":kmer_seq}
         pos_dict[kmer_position] = pos_kmers_dict
         # additionally, add position to list
         pos_list.append(kmer_position)
     
     return
 
-# A function which adds the insertions to the MD:Z field
-# NOTE: the MD:Z field specifies deletions (insertions in the reference)
-# but no insertions (deletions in the reference).
-# However, the insertions are specified in the CIGAR as the length of the insertion and "I"
-# Thus, we add the insertions to the expanded md z so that the kmers with differences due
-# to insertions could be identified.
-# This is not the case of deletions (insertions in the reference), which are indicated
-# in the MD:Z field as "^" followed by the nucleotides missing in the read. Note that
-# this string could be left untouched to differenciate kmers with different deletions.
-# However, processing deletions further than that should be done with care, since
-# a deletion followed by SNPs could not be unambiguously resolved from MD:Z of some mappers.
-# E.g. "^AAAGG" is the last G the last nt of the deletion or a G SNP...
-# Some mapper add a 0 between the indel and a SNP, but this is not always the case and it is
-# not done when the sequence following the read is not an SNP (is a match), and therefore is
-# difficult to process
-def f_add_insertions(expanded_md_z, insertions):
-    res_md = expanded_md_z # final res_md result of adding insertions
-    
-    for position in insertions:
-        res_md = res_md[:position]+["I"]+res_md[position+1:]
-    
-    return res_md
+# A function which processes the insertions and deletions to the MD:Z field
+def f_add_insertions(md_z, cigartuples, read_seq, read_left_clip):
+        ret_read_seq = read_seq
+        ret_md_z = md_z
+        
+        insertions = []
+        if CIGAR_FIELD_INSERTION in [x[0] for x in cigartuples] or \
+            CIGAR_FIELD_DELETION in [x[0] for x in cigartuples]:
+            position = 0
+            insertions = []
+            
+            #M BAM_CMATCH 0
+            #I BAM_CINS 1
+            #D BAM_CDEL 2
+            #N BAM_CREF_SKIP 3
+            #S BAM_CSOFT_CLIP 4
+            #H BAM_CHARD_CLIP 5
+            #P BAM_CPAD 6
+            #= BAM_CEQUAL 7
+            #X BAM_CDIFF 8
+            #B BAM_CBACK 9
+            
+            for cigartuple in cigartuples:
+                cigarfield = cigartuple[0]
+                cigarspan = cigartuple[1]
+                
+                if cigarfield == CIGAR_FIELD_SOFT_CLIP or \
+                    cigarfield == CIGAR_FIELD_HARD_CLIP:
+                    continue
+                
+                elif cigarfield == CIGAR_FIELD_INSERTION:
+                    #for i in range(1, cigarspan+1):
+                    #    insertions.append(position+i)
+                    ret_md_z = ret_md_z[:position]+[SYMBOL_INSERTION]*cigarspan+ret_md_z[position:]
+                    
+                    position+=cigarspan
+                    
+                elif cigarfield == CIGAR_FIELD_DELETION:
+                    ret_md_z = ret_md_z[:position]+ret_md_z[position+cigarspan+1:]
+                    
+                    ret_md_z = ret_md_z[:position]+[SYMBOL_DELETION]*cigarspan+ret_md_z[position:]
+                    
+                    read_pos = position+read_left_clip
+                    ret_read_seq = ret_read_seq[:read_pos]+"".join([SYMBOL_DELETION]*cigarspan)+ret_read_seq[read_pos:]
+                    
+                    position+=cigarspan
+                    
+                    #ret_md_z = ret_md_z[:position]+ret_md_z[position+cigarspan+1:]
+                    #position+=1
+                    
+                elif cigarfield == CIGAR_FIELD_MATCH:
+                    position+=cigarspan
+                    
+                else:
+                    sys.stderr.write("**WARNING: Skipping cigarfield "+str(cigarfield)+"\n")
+                    position+=cigarspan
+                
+            #for position in insertions:
+            #    ret_md_z = ret_md_z[:position-1]+["I"]+ret_md_z[position-1:]
+            #print expanded_md_z
+        
+        return (ret_md_z, ret_read_seq)
 
 ## Prints all the kmers in a specific position
 def f_print_pos_kmers(kmer_ref_name, kmer_position, pos_kmers_dict, min_depth):
     
     for kmer in pos_kmers_dict:
-        kmer_count = pos_kmers_dict[kmer]
+        kmer_count = pos_kmers_dict[kmer]["count"]
+        kmer_seq = pos_kmers_dict[kmer]["kmer_seq"]
         if kmer_count >= min_depth:
-            sys.stdout.write(str(kmer_ref_name)+"\t"+str(kmer_position)+"\t"+str(kmer)+"\t"+str(kmer_count)+"\n")
+            if read_param:
+                sys.stdout.write(str(kmer_ref_name)+"\t"+str(kmer_position)+"\t"+
+                                 str(kmer)+"\t"+kmer_seq+"\t"+str(kmer_count)+"\n")
+            else:
+                sys.stdout.write(str(kmer_ref_name)+"\t"+str(kmer_position)+"\t"+
+                                 str(kmer)+"\t"+str(kmer_count)+"\n")
         
     return
 
-##
+## Prints all the kmers from already-processed reads (by position, according to flush_interval)
 def f_print_previous_kmers(refs_dict, refs_list, curr_ref_id, curr_pos, min_depth, flush_interval):
     new_refs_list = []
     new_refs_dict = {}
@@ -311,13 +335,40 @@ def f_print_previous_kmers(refs_dict, refs_list, curr_ref_id, curr_pos, min_dept
 
 ################ GLOBALS AND PARAMETERS
 
-VERBOSE_ALL = 5
-verbosity = 5
+VERBOSE_ALL = 5 # maximum verbosity
+verbosity = 0 # verbosity parameter
 
+# FLUSH_INTERVAL controls the distance to
+# already-processed reads whose kmers will
+# be output while processing resumes with
+# the reads in the current position.
 FLUSH_INTERVAL = 10000
 
-CIGAR_INSERTION_FIELD = 1
-CIGAR_SOFTCLIP_FIELD = 4
+# The next are the fields found in the
+# cigar tuples from pysam
+CIGAR_FIELD_MATCH = 0
+CIGAR_FIELD_INSERTION = 1
+CIGAR_FIELD_DELETION = 2
+CIGAR_FIELD_SOFT_CLIP = 4
+CIGAR_FIELD_HARD_CLIP = 5
+
+# The complete set of codes for cigar tuples
+# in pysam is:
+    #M BAM_CMATCH 0
+    #I BAM_CINS 1
+    #D BAM_CDEL 2
+    #N BAM_CREF_SKIP 3
+    #S BAM_CSOFT_CLIP 4
+    #H BAM_CHARD_CLIP 5
+    #P BAM_CPAD 6
+    #= BAM_CEQUAL 7
+    #X BAM_CDIFF 8
+    #B BAM_CBACK 9
+
+# Symbols use to fill the
+# MD field with insertions and deletions
+SYMBOL_INSERTION = "I"
+SYMBOL_DELETION = "^"
 
 FILE_TYPE_BAM = "BAM"
 FILE_TYPE_SAM = "SAM"
@@ -327,11 +378,14 @@ DEFAULT_START_PARAM = -1
 DEFAULT_END_PARAM = -1
 DEFAULT_KMER_PARAM = 50
 DEFAULT_DEPTH_PARAM = 0
+DEFAULT_QUALITY_PARAM = -1
 
 ## Usage
+##
 __usage = "usage: kmeleon_extract.py [OPTIONS] -b BAM_FILE|-s SAM_FILE\n"+\
           "Note that this software outputs to stderr and stdout.\n\n"+\
-          "typical command: kmeleon_extract.py -d 4 -b demo_data/demo.2_19.bam > demo_data/demo.2_19.kmers"
+          "typical command: kmeleon_extract.py -q 60 -r -d 4 -b demo_data/demo.2_19.bam > demo_data/demo.2_19.kmers\n\n"+\
+          "See options running kmeleon_extract.py --help\n"
 optParser = OptionParser(__usage)
 
 optParser.add_option('-t', '--target', action='store', dest='target_param', type='string', \
@@ -352,6 +406,10 @@ optParser.add_option('-k', '--kmer', action='store', dest='kmer_param', type='in
                     help='The length of fragments (k-mers) to parse. '+\
                     '(default: '+str(DEFAULT_KMER_PARAM)+')')
 
+optParser.add_option('-q', '--quality', action='store', dest='quality_param', type='int', \
+                    help='The minimum mapping quality (MAPQ) of a read to be considered. '+\
+                    '(default: '+str(DEFAULT_QUALITY_PARAM)+')')
+
 optParser.add_option('-d', '--depth', action='store', dest='depth_param', type='int', \
                     help='The minimum times a k-mer is found to be reported in the output. '+\
                     '(default: '+str(DEFAULT_DEPTH_PARAM)+')')
@@ -364,7 +422,10 @@ optParser.add_option('-s', '--sam', action='store', dest='sam_param', type='stri
                     help='A SAM file to process. '+\
                     'Either the -s or the -b option is required.')
 
-########### Read parameters
+optParser.add_option('-r', '--read', action='store_true', dest='read_param', \
+                    help='When -r is set, the kmer sequence is also output.')
+
+########### Read and prepare parameters
 ###########
 
 (options, arguments) = optParser.parse_args()
@@ -380,7 +441,7 @@ else:
 ## Start
 if options.start_param:
     if target_param == DEFAULT_TARGET_PARAM:
-        optParser.exit(0, "The --start and --end options require a specific --target (-t) option.\n")
+        optParser.exit(0, __usage+"\n"+"The --start and --end options require a specific --target (-t) option.\n")
     else:
         start_param = options.start_param
 else:
@@ -389,7 +450,7 @@ else:
 ## End
 if options.end_param:
     if target_param == DEFAULT_TARGET_PARAM:
-        optParser.exit(0, "The --start and --end options require a specific --target (-t) option.\n")
+        optParser.exit(0, __usage+"\n"+"The --start and --end options require a specific --target (-t) option.\n")
     else:
         end_param = options.end_param
 else:
@@ -406,6 +467,18 @@ if options.depth_param:
     depth_param = options.depth_param
 else:
     depth_param = DEFAULT_DEPTH_PARAM
+
+## minimum read mapping quality
+if options.quality_param:
+    quality_param = options.quality_param
+else:
+    quality_param = DEFAULT_QUALITY_PARAM
+    
+## include DNA sequence of the kmer in the output
+if options.read_param:
+    read_param = True
+else:
+    read_param = False
     
 ## BAM file
 file_type = ""
@@ -416,151 +489,266 @@ elif options.sam_param:
         input_file_param = options.sam_param
         file_type = FILE_TYPE_SAM
 else:
-    optParser.exit(0, "A BAM file or SAM file must be specified (with the -b or -s options, respectively).\n")
+    optParser.exit(0, __usage+"\n"+"A BAM file or SAM file must be specified (with the -b or -s options, respectively).\n")
 
 #########################
 ######################### BEGIN
-
-#store_depths = True
+#########################
 
 sys.stderr.write("Reading file "+input_file_param+" to process target "+target_param+"\n")
 
-#kmer_param = 50
+# each kmer is extracted from the read
+# from the current position +- window_side
+# <--------------i-------------->
 window_side = kmer_param / 2
 
-refs_dict = {} # chromosome, contig, ...
-refs_list = [] # a list of chromosomes, contigs, ...
-pos_dict = {} # a base pairs position
-pos_list = [] # a list of base pairs positions
+# The global structures which keep the positions and kmers
+# for each chromosome/contig in the reference
+refs_dict = {} # chromosome, contig, ... --> positions --> kmers
+refs_list = [] # the list of chromosomes, contigs, ...
 
 ## TODO: Add exception handling to this
+# Open the input (BAM/SAM) file
 input_file = get_input_file(input_file_param, file_type)
 
+# Count the number of reads to process
 numreads = get_samfile_count(input_file, target_param, start_param, end_param)
 
 sys.stderr.write("Num of reads to process "+str(numreads)+"\n")
 
 numreads_processed = 0
+numreads_lowqual = 0
+numreads_unmapped = 0
 header_printed = False
 first_to_flush_pos = -1
 
-#for line in open(samfile, 'r'):
+# Obtain the iterator to read the input file
 samfile_iter = get_samfile_iter(input_file, target_param, start_param, end_param)
 
+# For each read in the input file
+#
 for read in samfile_iter:
     
-    if read.is_unmapped: continue
+    # CPCantalapiedra 20180615
+    # skip those reads under the quality (MAPQ) threshold
+    if read.mapping_quality < quality_param:
+        numreads_lowqual+=1
     
-    read_id = read.query_name
-    # this is the chromosome or contig of the current mapping
-    # however this is an id, to obtain the name we need to do:
-    # input_file.getrname(reference_id)
-    read_ref_id = read.reference_id
-    read_ref_name = input_file.getrname(read_ref_id)
-    
-    try:
-        read_md_z = read.get_tag("MD")
-    except KeyError:
-        if verbosity == VERBOSE_ALL:
+    # skip unmapped reads
+    elif read.is_unmapped:
+        numreads_unmapped+=1
+        
+    else:
+        read_id = read.query_name
+        # this is the chromosome or contig of the current mapping
+        # however this is an id, to obtain the name we need to do:
+        # input_file.getrname(reference_id)
+        read_ref_id = read.reference_id
+        read_ref_name = input_file.getrname(read_ref_id)
+        
+        if read.is_reverse: read_strand = "-"
+        else: read_strand = "+"
+        
+        try:
+            read_md_z = read.get_tag("MD")
+            # not sure whether the next is really necessary
+            if read_md_z.startswith("0"): read_md_z = read_md_z[1:]
+        except KeyError:
             sys.stderr.write("WARNING: No MD:Z field in read "+read_id+"\n")
-        #sys.stderr.write(str(read)+"\n")
-        #sys.stderr.write("\n")
-        #break
-        continue
-    
-    expanded_md_z = f_expand_md_z(read_md_z)
-    
-    cigartuples = read.cigartuples
-    
-    if CIGAR_INSERTION_FIELD in [x[0] for x in cigartuples]:
-        #print expanded_md_z
-        #print read.cigarstring
-        #print cigartuples
-        position = 0
-        insertions = []
-        for cigartuple in cigartuples:
-            if cigartuple[0]==CIGAR_SOFTCLIP_FIELD:
-                continue
-            if cigartuple[0]==CIGAR_INSERTION_FIELD:
-                for i in range(1, cigartuple[1]+1):
-                    insertions.append(position+i)
+            if verbosity == VERBOSE_ALL:
+                sys.stderr.write(str(read)+"\n")
+            sys.stderr.write("\t you could wish to run samtools calmd to obtain MD:Z field.\n")
+            #sys.stderr.write(str(read)+"\n")
+            #sys.stderr.write("\n")
+            #break
+            continue
+        
+        # Add insertions to expanded MD:Z
+        cigartuples = read.cigartuples
+        read_left_clip = read.query_alignment_start
+        
+        read_seq = read.seq
+        
+        ########### The next are very important steps
+        ########### in which the MD:Z and CIGAR fields are
+        ########### processed to obtain a final list
+        ########### of symbols representing the alignment
+        ########### of the read with the reference
+        ########### kmers will be retrieved afterwards
+        ########### from this list of symbols
+        # 3G^T2A --> [1, 1, 1, G, ^, T, 1, 1, A]
+        expanded_md_z = f_expand_md_z(read_md_z)
+        
+        (final_md_z, read_seq) = f_add_insertions(expanded_md_z, cigartuples, read_seq, read_left_clip)
+        
+        # obtain starting and ending position of read
+        
+        read_pos_start = 0 #read_pos_start = 1
+        #read_pos_end = read.query_alignment_end - read.query_alignment_start
+        read_pos_end = len(final_md_z)
+        
+        # positions of the read alignment in the reference
+        ref_pos_start = read.reference_start
+        ref_pos_end = read.reference_end
+        
+        pos_range = range(read_pos_start + window_side, read_pos_end - window_side)
+        
+        #if read_id == "HWI-ST1450_131:6:2308:3608:17497#5@0" or \
+        #    read_id == "HWI-ST1450_131:6:1314:15403:49296#5@0":
+        #    print "ID: "+read_id
+        #    print "SEQ: "+read_seq
+        #    print "REF: "+read_ref_name
+        #    print "strand: "+read_strand
+        #    print "CIGAR: "+read.cigarstring
+        #    print "MD:Z: "+read_md_z
+        #    print "cigar tuples: "+" ".join([str(x) for x in cigartuples])
+        #    print "expanded MD:Z: "+str(expanded_md_z)
+        #    print "MD:Z with insertions: "+str(final_md_z)
+        #    print "\tlen: "+str(len(final_md_z))
+        #    print "Ref start: "+str(read.reference_start)
+        #    print "Ref end: "+str(read.reference_end)
+        #    print "Read align start: "+str(read.query_alignment_start)
+        #    print "Read align end: "+str(read.query_alignment_end)
+        #    print "Read left clip: "+str(read_left_clip)
+        #    print "Read pos end: "+str(read_pos_end)
+        #    print "Pos range: "+str(pos_range)
+        #    print ""
+        
+        # Initialize the flush variable to control when to output
+        # kmers from already processed reads
+        if first_to_flush_pos == -1:
+            first_to_flush_pos = ref_pos_start # a flag to trigger output process
+        
+        ################# From this point, the read is traversed
+        ################# to extract and record each single kmer
+        if len(pos_range) > 0:
+            prev_insertions = 0
+            for i in pos_range:
                 
-            position+=cigartuple[1]
+                # this is the symbol in the center of the kmer
+                central_nt = final_md_z[i]
+                
+                # if the symbol is an insertion, the kmer is skipped
+                # since there is no actual kmer mapped to the reference
+                # with the nucleotides which are in the read insertion
+                if central_nt == SYMBOL_INSERTION: continue
+                
+                clip_start = i - window_side
+                clip_end = i + window_side + 1
+                
+                # Insertions have to be included in the kmer
+                # so that this kmer can be differentiated from
+                # those kmers without the insertions.
+                # Therefore, the kmer size must be increased to make
+                # room for the inserted nucleotides.
+                #
+                # TODO: this probably should be a while() loop
+                # checking whether new insertions have been added after increasing
+                # the clipping interval.
+                # Check whether the loop works, and remove the previous code
+                clipped_md_z = final_md_z[clip_start:clip_end]
+                num_insertions = clipped_md_z.count(SYMBOL_INSERTION)
+                prev_insertions = -1
+                while (num_insertions != prev_insertions):
+                    clip_end = i + window_side + 1 + num_insertions
+                    clipped_md_z = final_md_z[clip_start:clip_end]
+                    prev_insertions = num_insertions
+                    num_insertions = clipped_md_z.count(SYMBOL_INSERTION)
+                
+                # if the clipping goes beyond the length of the kmer
+                # then the kmer is not output, since will cause shorter
+                # kmers than expected
+                if clip_end > len(final_md_z): continue
+                
+                #clip_end = i + window_side + 1 + num_insertions
+                #clipped_md_z = final_md_z[clip_start:clip_end]
+                
+                # clip the kmer sequence.
+                # the soft clipping is not included in the MD:Z field
+                # BUT it is included in the read sequence, and thus
+                # the soft left clipping has to be considered when
+                # extracting the kmer sequence from the read
+                kmer_seq = read_seq[clip_start+read_left_clip:clip_end+read_left_clip]
+                
+                ###################################################
+                # the next represents the final kmer to be recorded
+                collapsed_md_z = f_collapse_md_z(clipped_md_z)
+                
+                # obtain the kmer position
+                #kmer_contig_position = f_get_kmer_contig_position(i, ref_pos_start, read_left_clip)
+                kmer_contig_position = ref_pos_start + (i - 1)
+                
+                # Insertions before the central nt of this kmer
+                # have to be counted, so that the actual position
+                # of the kmer is computed correctly
+                prev_insertions = final_md_z[:i].count(SYMBOL_INSERTION)
+                kmer_contig_position -= prev_insertions
+                
+                #if read_id == "HWI-ST1450_131:6:1213:21225:9778#5@0" or \
+                #    read_id == "HWI-ST1450_131:6:2211:4897:90286#5@0":
+                # if kmer_contig_position == 308378329:
+                #     print "ID: "+read_id
+                #     print "Pos in range: "+str(i)
+                #     print "Central nt: "+str(central_nt)
+                #     print "Prev insertions: "+str(prev_insertions)
+                #     print "Num insertions: "+str(num_insertions)
+                #     print "Read MD:Z "+str(final_md_z)
+                #     print "\tlen: "+str(len(final_md_z))
+                #     print "Clip start: "+str(clip_start)
+                #     print "Clip left: "+str(read_left_clip)
+                #     print "Clip end: "+str(clip_end)
+                #     print "Clipped md:z: "+str(clipped_md_z)
+                #     print "\tlen: "+str(len(clipped_md_z))
+                #     print "Collapsed md:z"+str(collapsed_md_z)
+                #     print "kmer position: "+str(kmer_contig_position)
+                #     print "kmer seq: "+kmer_seq
+                #     print "\tlen: "+str(len(kmer_seq))
+                #     print ""
+                
+                # record the kmer in its position
+                #
+                f_add_kmer_depths(refs_dict, refs_list,
+                                  read_ref_id, read_ref_name,
+                                  kmer_contig_position, collapsed_md_z, kmer_seq)
             
-        #print insertions
+            ################ Generate output
+            #
+            # Header (only the first time)
+            if not header_printed:
+                #if store_depths:
+                if read_param:
+                    sys.stdout.write("@Target\tPosition\tkmer(md_z)\tdp\tkmer(DNA)\n")
+                else:
+                    sys.stdout.write("@Target\tPosition\tkmer(md_z)\tdp\n")
+                #else:
+                #    sys.stdout.write("@ Position\tMD_Z\n")
+                header_printed = True
+            
+            #
+            # kmers (for those reads which have been processed already)
+            if ref_pos_start - FLUSH_INTERVAL*2 > first_to_flush_pos:
+                (refs_list, refs_dict) = f_print_previous_kmers(refs_dict, refs_list,
+                                                                read_ref_id, ref_pos_start,
+                                                                depth_param, FLUSH_INTERVAL)
+                
+                if len(refs_list) > 0 and len(refs_dict[refs_list[0]]["pos_list"]) > 0:
+                    first_to_flush_pos = refs_dict[refs_list[0]]["pos_list"][0]
+                else:
+                    first_to_flush_pos = -1 # will be updated to ref_pos_start in the next iteration
         
-        expanded_md_z = f_add_insertions(expanded_md_z, insertions)
-        #print expanded_md_z
+        # Here, the read has been processed completely
+        # and its kmers have been extracted and recorded.
+        numreads_processed+=1
     
-    # obtain starting and ending position of read
-    read_pos_start = 1
-    read_pos_end = read.query_alignment_end - read.query_alignment_start
-    ref_pos_start = read.reference_start+1
-    if first_to_flush_pos == -1:
-        first_to_flush_pos = ref_pos_start # a flag to trigger output process
-    ref_pos_end = read.reference_end
-    
-    # we need to consider clipping when obtaining the final position of the
-    # kmer in the contig
-    read_left_clip = read.query_alignment_start
-    
-    #sys.stdout.write("\tRel Position: "+str(read_pos_start)+"-"+str(read_pos_end)+"\n")
-    #sys.stdout.write("\tLeft clip (soft mask): "+str(read_left_clip)+"\n")
-    #sys.stdout.write("\tAbs Position: "+str(ref_pos_start)+"-"+str(ref_pos_end)+"\n")
-    
-    pos_range = range(read_pos_start + window_side, read_pos_end - window_side + 1)
-    if len(pos_range) > 0:
-        for i in pos_range:
-            
-            clipped_md_z = f_clip_md_z(expanded_md_z, i, window_side)
-            
-            collapsed_md_z = f_collapse_md_z(clipped_md_z)
-            
-            #kmer_contig_position = f_get_kmer_contig_position(i, read_map_pos, read_clipping)
-            kmer_contig_position = f_get_kmer_contig_position(i, ref_pos_start, read_left_clip)
-            
-            #if store_depths:
-            f_add_kmer_depths(refs_dict, refs_list,
-                              read_ref_id, read_ref_name,
-                              kmer_contig_position, collapsed_md_z)
-            #else:
-            #    f_add_kmer(kmer_contig_position, collapsed_md_z)
-        
-        ################ Generate output
-        # Header
-        if not header_printed:
-            #if store_depths:
-            sys.stdout.write("@Target\tPosition\tkmer(md_z)\tdp\n")
-            #else:
-            #    sys.stdout.write("@ Position\tMD_Z\n")
-            header_printed = True
-        
-        if ref_pos_start - FLUSH_INTERVAL*2 > first_to_flush_pos:
-            (refs_list, refs_dict) = f_print_previous_kmers(refs_dict, refs_list,
-                                                            read_ref_id, ref_pos_start,
-                                                            depth_param, FLUSH_INTERVAL)
-            #print "POS RANGE"
-            #print read
-            #print pos_range
-            #print read_pos_start
-            #print read_pos_end
-            #print window_side
-            #sys.stderr.write(str(len(refs_dict))+"\n")
-            #sys.stderr.write(str(len(refs_list))+"\n")
-            
-            if len(refs_list) > 0 and len(refs_dict[refs_list[0]]["pos_list"]) > 0:
-                first_to_flush_pos = refs_dict[refs_list[0]]["pos_list"][0]
-            else:
-                first_to_flush_pos = -1 # will be updated to ref_pos_start in the next iteration
-    
-    numreads_processed+=1
-    if (numreads_processed % 1000 == 0):
-        sys.stderr.write(str(numreads_processed)+" reads processed (out of "+str(numreads)+").\n")
+    numreads_total = numreads_processed+numreads_lowqual+numreads_unmapped
+    if (numreads_total % 1000 == 0):
+        sys.stderr.write(str(numreads_total)+" reads parsed (out of "+str(numreads)+").\n")
 
 input_file.close()
 
 ################ Generate output for the remaining data
-# Rows
+#
+# kmers which have not been "flushed"
 for read_ref_id in refs_list:
     pos_list = refs_dict[read_ref_id]["pos_list"]
     pos_dict = refs_dict[read_ref_id]["pos_dict"]
@@ -568,13 +756,18 @@ for read_ref_id in refs_list:
     
     for kmer_position in pos_list:
         if kmer_position in pos_dict:
-            #sys.stderr.write("Position "+str(kmer_position)+"\n")
             pos_kmers_dict = pos_dict[kmer_position]
             f_print_pos_kmers(read_ref_name, kmer_position, pos_kmers_dict, depth_param)
             
         else:
             raise Exception("Position "+str(kmer_position)+" is not in dict")
-    
+
+sys.stderr.write("Num of reads processed "+str(numreads_processed)+"\n")
+sys.stderr.write("Num of low quality reads "+str(numreads_lowqual)+"\n")
+sys.stderr.write("Num of unmapped reads "+str(numreads_unmapped)+"\n")
+numreads_total = numreads_processed+numreads_lowqual+numreads_unmapped
+sys.stderr.write("Total reads "+str(numreads_total)+"\n")
+
 sys.stderr.write("Finished.\n")
 
 ## END
